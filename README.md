@@ -75,7 +75,7 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
       * com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType
       * com.qualcomm.robotcore.hardware.configuration.annotations.MotorType
       * com.qualcomm.robotcore.hardware.configuration.annotations.ServoType
-    * External libraries that use the following annotations can add new functionality to the Robot Controller:
+    * External libraries that use the following annotations can add new functionality to the DhsTeamCode.TeamRobot Controller:
       * org.firstinspires.ftc.ftccommon.external.OnCreate
       * org.firstinspires.ftc.ftccommon.external.OnCreateEventLoop
       * org.firstinspires.ftc.ftccommon.external.OnCreateMenu
@@ -93,7 +93,7 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
     * Advanced Gamepad features are enabled by default, but may be disabled through the settings menu in order to revert to gamepad support provided natively by Android
 * Improves accuracy of ping measurement
     * Fixes issue where the ping time showed as being higher than reality when initially connecting to or restarting the robot
-    * To see the full improvement, you must update both the Robot Controller and Driver Station apps
+    * To see the full improvement, you must update both the DhsTeamCode.TeamRobot Controller and Driver Station apps
 * Updates samples located at [/FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples](FtcRobotController/src/main/java/org/firstinspires/ftc/robotcontroller/external/samples)
     * Added ConceptGamepadRumble and ConceptGamepadTouchpad samples to illustrtate the use of these new gampad capabilities.
     * Condensed existing Vuforia samples into just 2 samples (ConceptVuforiaFieldNavigation & ConceptVuforiaFieldNavigationWebcam) showing how to determine the robot's location on the field using Vuforia. These both use the current season's Target images.  
@@ -102,7 +102,7 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
     * Warnings are now much more spaced out, so that they are easier to read
     * New warnings were added for conditions that should be resolved before competing
     * The mismatched apps warning now uses the major and minor app versions, not the version code
-    * The warnings are automatically re-enabled when a Robot Controller app from a new FTC season is installed
+    * The warnings are automatically re-enabled when a DhsTeamCode.TeamRobot Controller app from a new FTC season is installed
 * Adds support for I2C transactions on the Expansion Hub / Control Hub without specifying a register address
     * See section 3 of the [TI I2C spec](https://www.ti.com/lit/an/slva704/slva704.pdf)
     * Calling these new methods when using Modern Robotics hardware will result in an UnsupportedOperationException
@@ -113,7 +113,7 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
 * Improves behavior of the Wi-Fi band and channel selector on the Manage webpage.
 
 ### Bug fixes
- * Fixes Robot Controller app crash on Android 9+ when a Driver Station connects
+ * Fixes DhsTeamCode.TeamRobot Controller app crash on Android 9+ when a Driver Station connects
  * Fixes issue where an Op Mode was responsible for calling shutdown on the
    TensorFlow TFObjectDetector. Now this is done automatically.
  * Fixes Vuforia initialization blocks to allow user to chose AxesOrder. Updated
@@ -132,9 +132,9 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
 * Attempts to automatically fix the condition where a Control Hub's internal Expansion Hub is not
   working by re-flashing its firmware
 * Makes various improvements to the Wi-Fi Direct pairing screen, especially in landscape mode
-* Makes the Robot Controller service no longer be categorically restarted when the main activity is brought to foreground
+* Makes the DhsTeamCode.TeamRobot Controller service no longer be categorically restarted when the main activity is brought to foreground
     * (e.g. the service is no longer restarted simply by viewing the Self Inspect screen and pressing the back button)
-    * It is still restarted if the Settings menu or Configure Robot menu is opened
+    * It is still restarted if the Settings menu or Configure DhsTeamCode.TeamRobot menu is opened
 
 
 ### Bug fixes
@@ -142,7 +142,7 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
   Cannot open OpModes in v6.1 Blocks offline editor
 * Fixes [FtcRobotController issue #79](https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/79)
   6.1 causes a soft reboot on the Motorola E5 Play
-* Fixes issue where the Control Hub OS's watchdog would restart the Robot Controller app if 
+* Fixes issue where the Control Hub OS's watchdog would restart the DhsTeamCode.TeamRobot Controller app if
   the Control Hub was not able to communicate with its internal Expansion Hub
 * Fixes certain I2C devices not showing up in the appropriate `HardwareMap` fields (such as `hardwareMap.colorSensor`) 
 * Fixes issue where performing a Wi-Fi factory reset on the Control Hub would not set the Wi-Fi band to 2.4 GHz
@@ -165,8 +165,8 @@ The readme.md file located in the [/TeamCode/src/main/java/org/firstinspires/ftc
 * Adds support in UVC driver for enabling/disable AE priority. This setting provides a means to tell the camera firmware either
     * A) It can undershoot the requested frame rate in order to provide a theoretically better image (i.e. with a longer exposure than the inter-frame period of the selected frame rate allows)
     * B) It *must* meet the inter-frame deadline for the selected frame rate, even if the image may be underexposed as a result
-* Adds support for the Control Hub OS 1.1.2 Robot Controller watchdog
-    * The Robot Controller app will be restarted if it stops responding for more than 10 seconds
+* Adds support for the Control Hub OS 1.1.2 DhsTeamCode.TeamRobot Controller watchdog
+    * The DhsTeamCode.TeamRobot Controller app will be restarted if it stops responding for more than 10 seconds
 * Adds support for using the Driver Station app on Android 10+
 * Introduces an automatic TeleOp preselection feature
     * For details and usage guide, please see [this wiki entry](https://github.com/FIRST-Tech-Challenge/FtcRobotController/wiki/Automatically-Loading-a-Driver-Controlled-Op-Mode)
@@ -282,11 +282,11 @@ Version 5.5 requires Android Studio 4.0 or later.
     * The Control Hub will not be shown on the Expansion Hub Address Change settings page
 * Improves REV Hub firmware updater
     * The user can now choose between all available firmware update files
-    * Version 1.8.2 of the REV Hub firmware is bundled into the Robot Controller app.
+    * Version 1.8.2 of the REV Hub firmware is bundled into the DhsTeamCode.TeamRobot Controller app.
     * Text was added to clarify that Expansion Hubs can only be updated via USB.
     * Firmware update speed was reduced to improve reliability
     * Allows REV Hub firmware to be updated directly from the Manage webpage
-* Improves log viewer on Robot Controller
+* Improves log viewer on DhsTeamCode.TeamRobot Controller
     * Horizontal scrolling support (no longer word wrapped)
     * Supports pinch-to-zoom
     * Uses a monospaced font
@@ -303,21 +303,21 @@ Version 5.5 requires Android Studio 4.0 or later.
     * Shows firmware version for **all** Expansion and Control Hubs
 * Reworks network settings portion of Manage page
     * All network settings are now applied with a single click
-    * The Wi-Fi Direct channel of phone-based Robot Controllers can now be changed from the Manage page
+    * The Wi-Fi Direct channel of phone-based DhsTeamCode.TeamRobot Controllers can now be changed from the Manage page
     * Wi-Fi channels are filtered by band (2.4 vs 5 GHz) and whether they overlap with other channels
-    * The current Wi-Fi channel is pre-selected on phone-based Robot Controllers, and Control Hubs running OS 1.1.2 or later.
+    * The current Wi-Fi channel is pre-selected on phone-based DhsTeamCode.TeamRobot Controllers, and Control Hubs running OS 1.1.2 or later.
     * On Control Hubs running OS 1.1.2 or later, you can choose to have the system automatically select a channel on the 5 GHz band
 * Improves OnBotJava
     * New light and dark themes replace the old themes (chaos, github, chrome,...)
         * the new default theme is `light` and will be used when you first update to this version
     * OnBotJava now has a tabbed editor
     * Read-only offline mode
-* Improves function of "exit" menu item on Robot Controller and Driver Station
+* Improves function of "exit" menu item on DhsTeamCode.TeamRobot Controller and Driver Station
     * Now guaranteed to be fully stopped and unloaded from memory
 * Shows a warning message if a LinearOpMode exists prematurely due to failure to monitor for the start condition
-* Improves error message shown when the Driver Station and Robot Controller are incompatible with each other
-* Driver Station OpMode Control Panel now disabled while a Restart Robot is in progress
-* Disables advanced settings related to Wi-Fi Direct when the Robot Controller is a Control Hub.
+* Improves error message shown when the Driver Station and DhsTeamCode.TeamRobot Controller are incompatible with each other
+* Driver Station OpMode Control Panel now disabled while a Restart DhsTeamCode.TeamRobot is in progress
+* Disables advanced settings related to Wi-Fi Direct when the DhsTeamCode.TeamRobot Controller is a Control Hub.
 * Tint phone battery icons on Driver Station when low/critical.
 * Uses names "Control Hub Portal" and "Control Hub" (when appropriate) in new configuration files
 * Improve I2C read performance
@@ -337,7 +337,7 @@ Version 5.5 requires Android Studio 4.0 or later.
   modifies bulk caching semantics to allow for cache-preserving MANUAL/AUTO transitions.
 * Improves performance when REV 2M distance sensor is unplugged
 * Improves readability of Toast messages on certain devices
-* Allows a Driver Station to connect to a Robot Controller after another has disconnected
+* Allows a Driver Station to connect to a DhsTeamCode.TeamRobot Controller after another has disconnected
 * Improves generation of fake serial numbers for UVC cameras which do not provide a real serial number
     * Previously some devices would assign such cameras a serial of `0:0` and fail to open and start streaming
 	* Fixes [ftc_app issue #638](https://github.com/ftctechnh/ftc_app/issues/638).
@@ -355,8 +355,8 @@ Version 5.5 requires Android Studio 4.0 or later.
   the minimum confidence parameter.
 * Fixes a potential exploitation issue of [CVE-2019-11358](https://www.cvedetails.com/cve/CVE-2019-11358/) in OnBotJava
 * Fixes changing the address of an Expansion Hub with additional Expansion Hubs connected to it
-* Preserves the Control Hub's network connection when "Restart Robot" is selected
-* Fixes issue where device scans would fail while the Robot was restarting
+* Preserves the Control Hub's network connection when "Restart DhsTeamCode.TeamRobot" is selected
+* Fixes issue where device scans would fail while the DhsTeamCode.TeamRobot was restarting
 * Fix RenderScript usage
     * Use androidx.renderscript variant: increased compatibility
     * Use RenderScript in Java mode, not native: simplifies build
@@ -386,7 +386,7 @@ Version 5.5 requires Android Studio 4.0 or later.
     * Displays warning when Expansion Hub is not responding to commands
         * Specifies whether the condition is current or occurred temporarily during an OpMode run
     * Clarifies warning when Expansion Hub is not present at startup
-        * Specifies that this condition requires a Robot Restart before the hub can be used.
+        * Specifies that this condition requires a DhsTeamCode.TeamRobot Restart before the hub can be used.
         * The hub light will now accurately reflect this state
     * Improves logging and reduces log spam during these conditions
 * Syncs the Control Hub time and timezone to a connected web browser programming the robot, if a Driver Station is not available.
@@ -413,7 +413,7 @@ Version 5.5 requires Android Studio 4.0 or later.
     * Disabled buttons are now visually identifiable as disabled
     * A warning is shown if a user selects a TFOD sample, but their device is not compatible
     * Warning messages in a Blocks op mode are now visible by default.
-* Adds goBILDA 5201 and 5202 motors to Robot Configurator
+* Adds goBILDA 5201 and 5202 motors to DhsTeamCode.TeamRobot Configurator
 * Adds PIDF Annotation values to AndyMark, goBILDA and TETRIX motor configurations.
     This has the effect of causing the RUN_USING_ENCODERS and RUN_TO_POSITION modes to use
     PIDF vs PID closed loop control on these motors.  This should provide more responsive, yet stable, speed control.
@@ -437,7 +437,7 @@ Version 5.5 requires Android Studio 4.0 or later.
    * Includes sample Skystone TensorFlow op modes (Blocks).
 * Removes older (season-specific) sample op modes.
 * Includes 64-bit support (to comply with [Google Play requirements](https://android-developers.googleblog.com/2019/01/get-your-apps-ready-for-64-bit.html)).
-* Protects against Stuck OpModes when a Restart Robot is requested. (Thanks to FROGbots-4634) ([ftc_app issue #709](https://github.com/ftctechnh/ftc_app/issues/709))
+* Protects against Stuck OpModes when a Restart DhsTeamCode.TeamRobot is requested. (Thanks to FROGbots-4634) ([ftc_app issue #709](https://github.com/ftctechnh/ftc_app/issues/709))
 * Blocks related changes:
    * Fixes bug with blocks generated code when hardware device name is a java or javascript reserved word.
    * Shows generated java code for blocks, even when hardware items are missing from the active configuration.
@@ -492,11 +492,11 @@ Known issues:
 
 ## Version 4.2 (built on 18.10.30)
  * Includes fix to avoid deadlock situation with WatchdogMonitor which could result in USB communication errors.
-     - Comm error appeared to require that user disconnect USB cable and restart the Robot Controller app to recover.
+     - Comm error appeared to require that user disconnect USB cable and restart the DhsTeamCode.TeamRobot Controller app to recover.
      - robotControllerLog.txt would have error messages that included the words "E RobotCore: lynx xmit lock: #### abandoning lock:"
  * Includes fix to correctly list the parent module address for a REV Robotics Expansion Hub in a configuration (.xml) file.
      - Bug in versions 4.0 and 4.1 would incorrect list the address module for a parent REV Robotics device as "1".
-     - If the parent module had a higher address value than the daisy-chained module, then this bug would prevent the Robot Controller from communicating with the downstream Expansion Hub.
+     - If the parent module had a higher address value than the daisy-chained module, then this bug would prevent the DhsTeamCode.TeamRobot Controller from communicating with the downstream Expansion Hub.
  * Added requirement for ACCESS_COARSE_LOCATION to allow a Driver Station running Android Oreo to scan for Wi-Fi Direct devices.
  * Added google() repo to build.gradle because aapt2 must be downloaded from the google() repository beginning with version 3.2 of the Android Gradle Plugin.
      - Important Note: Android Studio users will need to be connected to the Internet the first time build the ftc_app project.
@@ -517,7 +517,7 @@ Known issues:
 
 Changes include:
  * Fix to prevent crash when deprecated configuration annotations are used.
- * Change to allow FTC Robot Controller APK to be auto-updated using FIRST Global Control Hub update scripts.
+ * Change to allow FTC DhsTeamCode.TeamRobot Controller APK to be auto-updated using FIRST Global Control Hub update scripts.
  * Removed samples for non supported / non legal hardware.
  * Improvements to Telemetry.addData block with "text" socket.
  * Updated Blocks sample op mode list to include Rover Ruckus Vuforia example.
@@ -533,8 +533,8 @@ Changes include:
     - User can upload calibration files from Program and Manage web interface.
     - UVC cameras seem to draw a fair amount of electrical current from the USB bus.
          + This does not appear to present any problems for the REV Robotics Control Hub.
-	 + This does seem to create stability problems when using some cameras with an Android phone-based Robot Controller.
-	 + FTC Tech Team is investigating options to mitigate this issue with the phone-based Robot Controllers.
+	 + This does seem to create stability problems when using some cameras with an Android phone-based DhsTeamCode.TeamRobot Controller.
+	 + FTC Tech Team is investigating options to mitigate this issue with the phone-based DhsTeamCode.TeamRobot Controllers.
     - Updated sample Vuforia Navigation and VuMark Op Modes to demonstrate how to use an internal phone-based camera and an external UVC webcam.
 
  * Support for improved motor control.
@@ -549,20 +549,20 @@ Changes include:
         + Tested with Moto G5 and E4 phones.
 	+ Also tested with other (currently non-approved) phones such as Samsung Galaxy S8.
 
-* Improved Expansion Hub firmware update support in Robot Controller app
-    - Changes to make the system more robust during the firmware update process (when performed through Robot Controller app).
+* Improved Expansion Hub firmware update support in DhsTeamCode.TeamRobot Controller app
+    - Changes to make the system more robust during the firmware update process (when performed through DhsTeamCode.TeamRobot Controller app).
     - User no longer has to disconnect a downstream daisy-chained Expansion Hub when updating an Expansion Hub's firmware.
         + If user is updating an Expansion Hub's firmware through a USB connection, he/she does not have to disconnect RS485 connection to other Expansion Hubs.
 	+ The user still must use a USB connection to update an Expansion Hub's firmware.
 	+ The user cannot update the Expansion Hub firmware for a downstream device that is daisy chained through an RS485 connection.
-    - If an Expansion Hub accidentally gets "bricked" the Robot Controller app is now more likely to recognize the Hub when it scans the USB bus.
-        + Robot Controller app should be able to detect an Expansion Hub, even if it accidentally was bricked in a previous update attempt.
-	+ Robot Controller app should be able to install the firmware onto the Hub, even if if accidentally was bricked in a previous update attempt.
+    - If an Expansion Hub accidentally gets "bricked" the DhsTeamCode.TeamRobot Controller app is now more likely to recognize the Hub when it scans the USB bus.
+        + DhsTeamCode.TeamRobot Controller app should be able to detect an Expansion Hub, even if it accidentally was bricked in a previous update attempt.
+	+ DhsTeamCode.TeamRobot Controller app should be able to install the firmware onto the Hub, even if if accidentally was bricked in a previous update attempt.
 
  * Resiliency
     - FTC software can detect and enable an FTDI reset feature that is available with REV Robotics v1.8 Expansion Hub firmware and greater.
-        + When enabled, the Expansion Hub can detect if it hasn't communicated with the Robot Controller over the FTDI (USB) connection.
-	+ If the Hub hasn't heard from the Robot Controller in a while, it will reset the FTDI connection.
+        + When enabled, the Expansion Hub can detect if it hasn't communicated with the DhsTeamCode.TeamRobot Controller over the FTDI (USB) connection.
+	+ If the Hub hasn't heard from the DhsTeamCode.TeamRobot Controller in a while, it will reset the FTDI connection.
 	+ This action helps system recover from some ESD-induced disruptions.
     - Various fixes to improve reliability of FTC software.
 
@@ -572,7 +572,7 @@ Changes include:
     - Refactored optimized Blocks Vuforia code to support Rover Ruckus image targets.
     - Added programming blocks to support PIDF (proportional, integral, derivative and feed forward) motor control.
     - Added formatting options (under Telemetry and Miscellaneous categories) so user can set how many decimal places to display a numerical value.
-    - Support to play audio files (which are uploaded through Blocks web interface) on Driver Station in addition to the Robot Controller.
+    - Support to play audio files (which are uploaded through Blocks web interface) on Driver Station in addition to the DhsTeamCode.TeamRobot Controller.
     - Fixed bug with Download Image of Blocks feature.
     - Support for REV Robotics Blinkin LED Controller.
     - Support for REV Robotics 2m Distance Sensor.
@@ -589,7 +589,7 @@ Changes include:
         + Under "Settings" a user can enable/disable this feature (it's disabled by default).
 	+ If enabled, user provides a "Match Number" through the Driver Station user interface (top of the screen).
 	    * The Match Number is used to create a log file specifically with log statements from that particular Op Mode run.
-	    * Match log files are stored in /sdcard/FIRST/matlogs on the Robot Controller.
+	    * Match log files are stored in /sdcard/FIRST/matlogs on the DhsTeamCode.TeamRobot Controller.
 	    * Once an op mode run is complete, the Match Number is cleared.
 	    * This is a convenient way to create a separate match log with statements only related to a specific op mode run.
 
@@ -613,9 +613,9 @@ Known issues:
  * Initial support for UVC compatible cameras
     - UVC cameras seem to draw significant amount of current from the USB bus.
         + This does not appear to present any problems for the REV Robotics Control Hub.
-	+ This does seem to create stability problems when using some cameras with an Android phone-based Robot Controller.
-	+ FTC Tech Team is investigating options to mitigate this issue with the phone-based Robot Controllers.
-    - There might be a possible deadlock which causes the RC to become unresponsive when using a UVC webcam with a Nougat Android Robot Controller.
+	+ This does seem to create stability problems when using some cameras with an Android phone-based DhsTeamCode.TeamRobot Controller.
+	+ FTC Tech Team is investigating options to mitigate this issue with the phone-based DhsTeamCode.TeamRobot Controllers.
+    - There might be a possible deadlock which causes the RC to become unresponsive when using a UVC webcam with a Nougat Android DhsTeamCode.TeamRobot Controller.
 
  * Wireless
     - When user selects a wireless channel, this channel does not necessarily persist if the phone is power cycled.
@@ -642,15 +642,15 @@ Changes include:
 ## Version 3.5 (built on 17.10.30)
 
 Changes with version 3.5 include:
- * Introduced a fix to prevent random op mode stops, which can occur after the Robot Controller app has been paused and then resumed (for example, when a user temporarily turns off the display of the Robot Controller phone, and then turns the screen back on).
+ * Introduced a fix to prevent random op mode stops, which can occur after the DhsTeamCode.TeamRobot Controller app has been paused and then resumed (for example, when a user temporarily turns off the display of the DhsTeamCode.TeamRobot Controller phone, and then turns the screen back on).
  * Introduced a fix to prevent random op mode stops, which were previously caused by random peer disconnect events on the Driver Station.
  * Fixes issue where log files would be closed on pause of the RC or DS, but not re-opened upon resume.
  * Fixes issue with battery handler (voltage) start/stop race.
  * Fixes issue where Android Studio generated op modes would disappear from available list in certain situations.
  * Fixes problem where OnBot Java would not build on REV Robotics Control Hub.
- * Fixes problem where OnBot Java would not build if the date and time on the Robot Controller device was "rewound" (set to an earlier date/time).
+ * Fixes problem where OnBot Java would not build if the date and time on the DhsTeamCode.TeamRobot Controller device was "rewound" (set to an earlier date/time).
  * Improved error message on OnBot Java that occurs when renaming a file fails.
- * Removed unneeded resources from android.jar binaries used by OnBot Java to reduce final size of Robot Controller app.
+ * Removed unneeded resources from android.jar binaries used by OnBot Java to reduce final size of DhsTeamCode.TeamRobot Controller app.
  * Added MR_ANALOG_TOUCH_SENSOR block to Blocks Programming Tool.
 
 ## Version 3.4 (built on 17.09.06)
@@ -668,7 +668,7 @@ This version of the software includes improves for the FTC Blocks Programming To
 Changes with verion 3.3 include:
  * Android Studio ftc_app project has been updated to use Gradle Plugin 2.3.3.
  * Android Studio ftc_app project is already using gradle 3.5 distribution.
- * Robot Controller log has been renamed to /sdcard/RobotControllerLog.txt (note that this change was actually introduced w/ v3.2).
+ * DhsTeamCode.TeamRobot Controller log has been renamed to /sdcard/RobotControllerLog.txt (note that this change was actually introduced w/ v3.2).
  * Improvements in I2C reliability.
  * Optimized I2C read for REV Expansion Hub, with v1.7 firmware or greater.
  * Updated all external/samples (available through OnBot and in Android project folder).
@@ -697,7 +697,7 @@ Known issues:
 
 This version of the software introduces the "OnBot Java" Development Tool.  Similar to the FTC Blocks Development Tool, the FTC OnBot Java Development Tool allows a user to create, edit and build op modes dynamically using only a Javascript-enabled web browser.
 
-The OnBot Java Development Tool is an integrated development environment (IDE) that is served up by the Robot Controller.  Op modes are created and edited using a Javascript-enabled browser (Google Chromse is recommended).  Op modes are saved on the Robot Controller Android device directly.
+The OnBot Java Development Tool is an integrated development environment (IDE) that is served up by the DhsTeamCode.TeamRobot Controller.  Op modes are created and edited using a Javascript-enabled browser (Google Chromse is recommended).  Op modes are saved on the DhsTeamCode.TeamRobot Controller Android device directly.
 
 The OnBot Java Development Tool provides a Java programming environment that does NOT need Android Studio.
 
@@ -706,8 +706,8 @@ The OnBot Java Development Tool provides a Java programming environment that doe
 Changes with version 3.2 include:
  * Enhanced web-based development tools
     - Introduction of OnBot Java Development Tool.
-    - Web-based programming and management features are "always on" (user no longer needs to put Robot Controller into programming mode).
-    - Web-based management interface (where user can change Robot Controller name and also easily download Robot Controller log file).
+    - Web-based programming and management features are "always on" (user no longer needs to put DhsTeamCode.TeamRobot Controller into programming mode).
+    - Web-based management interface (where user can change DhsTeamCode.TeamRobot Controller name and also easily download DhsTeamCode.TeamRobot Controller log file).
     - OnBot Java, Blocks and Management features available from web based interface.
 
 * Blocks Programming Development Tool:
@@ -731,7 +731,7 @@ Known issues:
 
 ## Version 3.10 (built on 17.05.09)
 
-This version of the software provides support for the REV Robotics Expansion Hub.  This version also includes improvements in the USB communication layer in an effort to enhance system resiliency.  If you were using a 2.x version of the software previously, updating to version 3.1 requires that you also update your Driver Station software in addition to updating the Robot Controller software.
+This version of the software provides support for the REV Robotics Expansion Hub.  This version also includes improvements in the USB communication layer in an effort to enhance system resiliency.  If you were using a 2.x version of the software previously, updating to version 3.1 requires that you also update your Driver Station software in addition to updating the DhsTeamCode.TeamRobot Controller software.
 
 Also note that in version 3.10 software, the setMaxSpeed and getMaxSpeed methods are no longer available (not deprecated, they have been removed from the SDK). Also note that the the new 3.x software incorporates motor profiles that a user can select as he/she configures the robot.
 
@@ -749,7 +749,7 @@ Additional Notes Regarding Version 3.00 (built on 17.04.13)
 
 In addition to the release changes listed below (see section labeled "Version 3.00 (built on 17.04.013)"), version 3.00 has the following important changes:
 
-1. Version 3.00 software uses a new version of the FTC Robocol (robot protocol).  If you upgrade to v3.0 on the Robot Controller and/or Android Studio side, you must also upgrade the Driver Station software to match the new Robocol.
+1. Version 3.00 software uses a new version of the FTC Robocol (robot protocol).  If you upgrade to v3.0 on the DhsTeamCode.TeamRobot Controller and/or Android Studio side, you must also upgrade the Driver Station software to match the new Robocol.
 2. Version 3.00 software removes the setMaxSpeed and getMaxSpeed methods from the DcMotor class.  If you have an op mode that formerly used these methods, you will need to remove the references/calls to these methods.  Instead, v3.0 provides the max speed information through the use of motor profiles that are selected by the user during robot configuration.
 3. Version 3.00 software currently does not have a mechanism to disable extra i2c sensors.  We hope to re-introduce this function with a release in the near future.
 
@@ -883,7 +883,7 @@ Changes include:
   * Incorporated suggested changes from public pull 216 (“Replace .. paths”).
   * Remove Servo Glitches when robot stopped.
   * if user hits “Cancels” when editing a configuration file, clears the unsaved changes and reverts to original unmodified configuration.
-  * Added log info to help diagnose why the Robot Controller app was terminated (for example, by watch dog function).
+  * Added log info to help diagnose why the DhsTeamCode.TeamRobot Controller app was terminated (for example, by watch dog function).
   * Added ability to transfer log from the controller.
   * Fixed inconsistency for AngularVelocity
   * Limit unbounded growth of data for telemetry.  If user does not call telemetry.update() for LinearOpMode in a timely manner, data added for telemetry might get lost if size limit is exceeded.
@@ -950,7 +950,7 @@ Changes include:
 
 ## Version 2.00 (released on 16.08.19)
  * This is the new release for the upcoming 2016-2017 FIRST Tech Challenge Season.
- * Channel change is enabled in the FTC Robot Controller app for Moto G 2nd and 3rd Gen phones.
+ * Channel change is enabled in the FTC DhsTeamCode.TeamRobot Controller app for Moto G 2nd and 3rd Gen phones.
  * Users can now use annotations to register/disable their Op Modes.
  * Changes in the Android SDK, JDK and build tool requirements (minsdk=19, java 1.7, build tools 23.0.3).
  * Standardized units in analog input.
@@ -961,18 +961,18 @@ Changes include:
  * Range.clip() method has been overloaded so it can support this operation for int, short and byte integers.
  * Some changes have been made (new methods added) on how a user can access items from the hardware map.
  * Users can now set the zero power behavior for a DC motor so that the motor will brake or float when power is zero.
- * Prototype Blockly Programming Mode has been added to FTC Robot Controller.  Users can place the Robot Controller into this mode, and then use a device (such as a laptop) that has a Javascript enabled browser to write Blockly-based Op Modes directly onto the Robot Controller.
+ * Prototype Blockly Programming Mode has been added to FTC DhsTeamCode.TeamRobot Controller.  Users can place the DhsTeamCode.TeamRobot Controller into this mode, and then use a device (such as a laptop) that has a Javascript enabled browser to write Blockly-based Op Modes directly onto the DhsTeamCode.TeamRobot Controller.
  * Users can now configure the robot remotely through the FTC Driver Station app.
  * Android Studio project supports Android Studio 2.1.x and compile SDK Version 23 (Marshmallow).
  * Vuforia Computer Vision SDK integrated into FTC SDK.  Users can use sample vision targets to get localization information on a standard FTC field.
  * Project structure has been reorganized so that there is now a TeamCode package that users can use to place their local/custom Op Modes into this package.
- * Inspection function has been integrated into the FTC Robot Controller and Driver Station Apps (Thanks Team HazMat… 9277 & 10650!).
+ * Inspection function has been integrated into the FTC DhsTeamCode.TeamRobot Controller and Driver Station Apps (Thanks Team HazMat… 9277 & 10650!).
  * Audio cues have been incorporated into FTC SDK.
- * Swap mechanism added to FTC Robot Controller configuration activity.  For example, if you have two motor controllers on a robot, and you misidentified them in your configuration file, you can use the Swap button to swap the devices within the configuration file (so you do not have to manually re-enter in the configuration info for the two devices).
+ * Swap mechanism added to FTC DhsTeamCode.TeamRobot Controller configuration activity.  For example, if you have two motor controllers on a robot, and you misidentified them in your configuration file, you can use the Swap button to swap the devices within the configuration file (so you do not have to manually re-enter in the configuration info for the two devices).
  * Fix mechanism added to all user to replace an electronic module easily.  For example, suppose a servo controller dies on your robot. You replace the broken module with a new module, which has a different serial number from the original servo controller.  You can use the Fix button to automatically reconfigure your configuration file to use the serial number of the new module.
  * Improvements made to fix resiliency and responsiveness of the system.
  * For LinearOpMode the user now must for a telemetry.update() to update the telemetry data on the driver station.  This update() mechanism ensures that the driver station gets the updated data properly and at the same time.
- * The Auto Configure function of the Robot Controller is now template based.  If there is a commonly used robot configuration, a template can be created so that the Auto Configure mechanism can be used to quickly configure a robot of this type.
+ * The Auto Configure function of the DhsTeamCode.TeamRobot Controller is now template based.  If there is a commonly used robot configuration, a template can be created so that the Auto Configure mechanism can be used to quickly configure a robot of this type.
  * The logic to detect a runaway op mode (both in the LinearOpMode and OpMode types) and to abort the run, then auto recover has been improved/implemented.
  * Fix has been incorporated so that Logitech F310 gamepad mappings will be correct for Marshmallow users.
 
@@ -1022,7 +1022,7 @@ Changes include:
 ## Release 16.02.09
 
  * Improved battery checker feature so that voltage values get refreshed regularly (every 250 msec) on Driver Station (DS) user interface.
- * Improved software so that Robot Controller (RC) is much more resilient and “self-healing” to USB disconnects:
+ * Improved software so that DhsTeamCode.TeamRobot Controller (RC) is much more resilient and “self-healing” to USB disconnects:
     - If user attempts to start/restart RC with one or more module missing, it will display a warning but still start up.
     - When running an op mode, if one or more modules gets disconnected, the RC & DS will display warnings,and robot will keep on working in spite of the missing module(s).
     - If a disconnected module gets physically reconnected the RC will auto detect the module and the user will regain control of the recently connected module.
@@ -1030,7 +1030,7 @@ Changes include:
  * Code changes to fix the null gamepad reference when users try to reference the gamepads in the init() portion of their op mode.
  * NXT light sensor output is now properly scaled.  Note that teams might have to readjust their light threshold values in their op modes.
  * On DS user interface, gamepad icon for a driver will disappear if the matching gamepad is disconnected or if that gamepad gets designated as a different driver.
- * Robot Protocol (ROBOCOL) version number info is displayed in About screen on RC and DS apps.
+ * DhsTeamCode.TeamRobot Protocol (ROBOCOL) version number info is displayed in About screen on RC and DS apps.
  * Incorporated a display filter on pairing screen to filter out devices that don’t use the “<TEAM NUMBER>-“ format. This filter can be turned off to show all Wi-Fi Direct devices.
  * Updated text in License file.
  * Fixed formatting error in OpticalDistanceSensor.toString().
@@ -1106,7 +1106,7 @@ Changes include:
   - Added HTRGBExample.java op mode (demonstrates how to use HT legacy color sensor).
   - Added MatrixControllerDemo.java (demonstrates how to use legacy Matrix controller).
  * Updated javadoc documentation.
- * Updated release .apk files for Robot Controller and Driver Station apps.
+ * Updated release .apk files for DhsTeamCode.TeamRobot Controller and Driver Station apps.
 
 ## Release 15.10.06.002
 
@@ -1118,7 +1118,7 @@ Changes include:
 
 ## Release 15.08.03.001
 
- * New user interfaces for FTC Driver Station and FTC Robot Controller apps.
+ * New user interfaces for FTC Driver Station and FTC DhsTeamCode.TeamRobot Controller apps.
  * An init() method is added to the OpMode class.
    - For this release, init() is triggered right before the start() method.
    - Eventually, the init() method will be triggered when the user presses an "INIT" button on driver station.
