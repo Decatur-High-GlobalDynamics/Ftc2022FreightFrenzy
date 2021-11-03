@@ -3,7 +3,7 @@ package DhsTeamCode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name="DhsFirstTeleOp", group="Ftc3543")
+@TeleOp(name="DhsFirstTeleOpX", group="Ftc3543")
 public class DhsFirstTeleOp extends OpMode {
     TeamRobot robot;
 
