@@ -13,7 +13,11 @@ public class DHSFirstAuto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         robot = new TeamRobot(this);
-        waitForStart();
+
+        while ( !isStarted() ) {
+            sleep(100);
+            telemetry.update();
+        }
 
         robot.setLeftPower(0.5);
         robot.setRightPower(0.5);
