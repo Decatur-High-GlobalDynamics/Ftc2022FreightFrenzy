@@ -4,16 +4,25 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class Bert_Robot {
     OpMode opMode;
     DcMotor leftDrive, rightDrive;
+    DcMotor liftMotor, frontDoor;
+    Servo backDoor;
+
     long lastLoopTime_ms = System.currentTimeMillis();
     long leftDrivePosition_previous=0, rightDrivePosition_previous=0;
     long leftDriveSpeed_perSec=0, rightDriveSpeed_perSec=0;
-    
+
+    // Gyro variables
+    float heading_totalDegreesTurned, desiredHeading;
+    float lastImuReading;
+
     BNO055IMU imu;
     long initializedTime_ms = System.currentTimeMillis();
     long opModeStarted_ms=-1;
@@ -28,6 +37,10 @@ public class Bert_Robot {
         leftDrive= opMode.hardwareMap.dcMotor.get("left_drive");
         leftDrivePosition_previous = leftDrive.getCurrentPosition();
 
+        liftMotor = opMode.hardwareMap.dcMotor.get("cage_lift");
+        frontDoor = opMode.hardwareMap.dcMotor.get("front_door");
+        backDoor  = opMode.hardwareMap.servo.get("back_door");
+
         imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
@@ -35,6 +48,7 @@ public class Bert_Robot {
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
         imu.initialize(parameters);
+        lastImuReading = heading_totalDegreesTurned = _getHeadingFromImu();
 
         opMode.telemetry.addData("Robot", "%s",
                 new Func<String>() {
@@ -77,23 +91,36 @@ public class Bert_Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("hdg first=%+6.2f second=%+6.2f third=%+5.2f",
-                                imu.getAngularOrientation().firstAngle,
-                                imu.getAngularOrientation().secondAngle,
-                                imu.getAngularOrientation().thirdAngle);
+                        return String.format("hdg=%+6.1f | goal=%+6.1f | err=%+3.0f | raw=%+6.1f",
+                                heading_totalDegreesTurned, desiredHeading,
+                                desiredHeading-heading_totalDegreesTurned,
+                                lastImuReading);
                     }
                 });
+        opMode.telemetry.addData("Arm", "%s",
+                new Func<String>() {
+                    @Override
+                    public String value() {
+                        return String.format("Front: pwr=%+5.1f @%d | Lift: pwr=%+5.1f @%d | Back: %.2f",
+                                frontDoor.getPower(), frontDoor.getCurrentPosition(),
+                                liftMotor.getPower(), liftMotor.getCurrentPosition(),
+                                backDoor.getPosition());
+                    }
+                });
+        loop();
     }
 
-    public Bert_Robot setLeftPower(double power) {
-        //Negative power on the left is forward, so we need to reverse it
-        leftDrive.setPower(-power);
-        return this;
+    private float _getHeadingFromImu() {
+        return imu.getAngularOrientation().firstAngle;
     }
 
-    public Bert_Robot setRightPower(double power) {
-        rightDrive.setPower(power);
-        return this;
+    public void setLeftPower(double power) {
+        leftDrive.setPower(power);
+    }
+
+    public void setRightPower(double power) {
+        //Negative power on the right is forward, so we need to reverse it
+        rightDrive.setPower(-power);
     }
 
     public void noteThatOpModeStarted() {
@@ -101,17 +128,48 @@ public class Bert_Robot {
             opModeStarted_ms = System.currentTimeMillis();
     }
 
-    public Bert_Robot updateStatus(String statusFormat, Object... formatArgs) {
+    // Describe what the robot is doing
+    public void updateStatus(String statusFormat, Object... formatArgs) {
         String newStatus = String.format(statusFormat, formatArgs);
         if ( !status.equals(newStatus) ) {
             status = newStatus;
             statusChangedTime_ms = System.currentTimeMillis();
         }
+    }
 
-        return this;
+    public void sleep(long mSec) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        long end   = start + mSec;
+
+        while ( System.currentTimeMillis() <= end ) {
+            loop();
+            Thread.sleep(10);
+        }
+    }
+
+
+    public void backDoorClose() {
+        backDoor.setPosition(0.3);
+    }
+
+    public void backDoorOpen() {
+        backDoor.setPosition(0);
     }
 
     public void loop() {
+        // Update heading
+        float imuReading = _getHeadingFromImu();
+        float degreesTurned = imuReading - lastImuReading;
+        lastImuReading = imuReading;
+
+        // Check for wrapping around (suddenly we will have turned a lot)
+        if ( degreesTurned > 180 )
+            degreesTurned -= 360;
+        else if ( degreesTurned < -180 )
+            degreesTurned += 360;
+
+        heading_totalDegreesTurned += degreesTurned;
+
         // Calculate motor speeds
         long now = System.currentTimeMillis();
         
