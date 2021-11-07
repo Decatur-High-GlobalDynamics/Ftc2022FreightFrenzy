@@ -10,6 +10,8 @@ import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class Bert_Robot {
+    public final double TICKS_PER_INCH = 10000/84.75;
+
     OpMode opMode;
     DcMotor leftDrive, rightDrive;
     DcMotor liftMotor, frontDoor;
@@ -123,6 +125,11 @@ public class Bert_Robot {
         rightDrive.setPower(-power);
     }
 
+    public void setDrivePower(double power) {
+        setLeftPower(power);
+        setRightPower(power);
+    }
+
     public void noteThatOpModeStarted() {
         if ( opModeStarted_ms == -1 )
             opModeStarted_ms = System.currentTimeMillis();
@@ -144,6 +151,16 @@ public class Bert_Robot {
         while ( System.currentTimeMillis() <= end ) {
             loop();
             Thread.sleep(10);
+        }
+    }
+
+    public void goForward(float inches) throws InterruptedException {
+        int startPosition=leftDrive.getCurrentPosition();
+        long endPosition= Math.round(startPosition+inches*TICKS_PER_INCH);
+        setDrivePower(.15);
+
+        while(leftDrive.getCurrentPosition()<endPosition){
+            sleep(10);
         }
     }
 
