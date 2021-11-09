@@ -195,7 +195,43 @@ public class Bert_Robot {
         while(leftDrive.getCurrentPosition()<endPosition){
             sleep(10);
         }
+        setDrivePower(0);
     }
+
+    public void goBackward(float inches) throws InterruptedException {
+        desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
+        int startPosition=leftDrive.getCurrentPosition();
+        long endPosition= Math.round(startPosition-inches*TICKS_PER_INCH);
+        setDrivePower(-.15);
+
+        while(leftDrive.getCurrentPosition()>endPosition){
+            sleep(10);
+        }
+        setDrivePower(0);
+    }
+    public void turnLeft(float degrees) throws InterruptedException {
+        desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
+        double startHeading= heading_totalDegreesTurned
+        double endHeading= startHeading-degrees;
+        setLeftPower(-0.15);setRightPower(0.15);
+
+        while(heading_totalDegreesTurned>endHeading){
+            sleep(10);
+        }
+        setDrivePower(0);
+    }
+    public void turnRight(float degrees) throws InterruptedException {
+        desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
+        double startHeading= heading_totalDegreesTurned
+        double endHeading= startHeading+degrees;
+        setLeftPower(0.15);setRightPower(-0.15);
+
+        while(heading_totalDegreesTurned<endHeading){
+            sleep(10);
+        }
+        setDrivePower(0);
+    }
+
 
 
 
@@ -219,7 +255,7 @@ public class Bert_Robot {
     }
 
 
-    private void setArmPosition(int position) {
+    public void setArmPosition(int position) {
         if ( position < liftMotor.getCurrentPosition() )
             liftMotor.setPower(0.3);
         else
