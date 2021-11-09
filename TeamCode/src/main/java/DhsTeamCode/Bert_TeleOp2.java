@@ -32,19 +32,13 @@ public class Bert_TeleOp2 extends OpMode {
 
 
         if ( gamepad2.dpad_up ) {
-            robot.liftMotor.setPower(.25);
-            robot.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.moveArmUp();
         }
         else if ( gamepad2.dpad_down ) {
-            robot.liftMotor.setPower(-0.1);
-            robot.liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.moveArmDown();
         }
         else {
-            if ( robot.liftMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION ) {
-                robot.liftMotor.setTargetPosition(robot.liftMotor.getCurrentPosition());
-                robot.liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                robot.liftMotor.setPower(0.25);
-            }
+            robot.holdArmPosition();
         }
 
 

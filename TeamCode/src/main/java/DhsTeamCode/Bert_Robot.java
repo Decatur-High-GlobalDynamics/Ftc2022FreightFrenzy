@@ -3,26 +3,34 @@ package DhsTeamCode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 public class Bert_Robot {
     public final double TICKS_PER_INCH = 10000/84.75;
 
+    public final int ARM_BOTTOM_POSITION=0,
+                     ARM_LOW_POSITION=1021,
+                     ARM_MID_POSITION=1321,
+                     ARM_HIGH_POSITION=1621,
+                     ARM_LIMIT_POSITION = 1800;
+
+    public final double ARM_DOWN_SPEED_WHEN_RESETTING=-0.10;
+    public final double ARM_LIFT_SPEED = 0.30;
+    public final double ARM_DOWN_SPEED = -0.20;
+
     OpMode opMode;
-    DcMotor leftDrive, rightDrive;
-    DcMotor liftMotor, frontDoor;
+    BertDcMotor leftDrive, rightDrive;
+    BertDcMotor liftMotor, frontDoor;
     Servo backDoor;
 
     long lastLoopTime_ms = System.currentTimeMillis();
-    long leftDrivePosition_previous=0, rightDrivePosition_previous=0;
-    long leftDriveSpeed_perSec=0, rightDriveSpeed_perSec=0;
 
     // Gyro variables
-    float heading_totalDegreesTurned, desiredHeading;
+    float heading_totalDegreesTurned, desiredHeading_totalDegreesTurned;
     float lastImuReading;
 
     BNO055IMU imu;
@@ -33,14 +41,17 @@ public class Bert_Robot {
 
     public Bert_Robot(OpMode _opMode) {
         opMode = _opMode;
-        rightDrive= opMode.hardwareMap.dcMotor.get("right_drive");
-        rightDrivePosition_previous = rightDrive.getCurrentPosition();
-        
-        leftDrive= opMode.hardwareMap.dcMotor.get("left_drive");
-        leftDrivePosition_previous = leftDrive.getCurrentPosition();
+        rightDrive= new BertDcMotor(opMode, "right_drive");
+        rightDrive.motor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        liftMotor = opMode.hardwareMap.dcMotor.get("cage_lift");
-        frontDoor = opMode.hardwareMap.dcMotor.get("front_door");
+        leftDrive=new BertDcMotor(opMode, "left_drive");
+
+        liftMotor=new BertDcMotor(opMode, "cage_lift");
+        liftMotor.setMinimumPosition(0);
+        liftMotor.setMaximumPosition(ARM_LIMIT_POSITION);
+
+        frontDoor=new BertDcMotor(opMode, "front_door");
+
         backDoor  = opMode.hardwareMap.servo.get("back_door");
 
         imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
@@ -79,13 +90,28 @@ public class Bert_Robot {
                     }
                 });
 
-                opMode.telemetry.addData("Drive", "%s",
+        opMode.telemetry.addData("G2", "%s",
+                new Func<String>() {
+                    @Override
+                    public String value() {
+                        Gamepad gp = opMode.gamepad2;
+                        return String.format("%s:%+3.1f,%+3.1f|%s:%+3.1f,%+3.1f|%s%s%s%s|%s%s%s%s|%s %s|t:%3.1f/%3.1f",
+                                gp.left_stick_button ? "LJ" : "lj",gp.left_stick_x, gp.left_stick_y,
+                                gp.right_stick_button ? "RJ" : "rj", gp.right_stick_x, gp.right_stick_y,
+                                gp.a ? "A" : "a", gp.b ? "B" : "b", gp.x ? "X" : "x", gp.y ? "Y" : "y",
+                                gp.dpad_up ? "U" : "u", gp.dpad_down ? "D" : "d", gp.dpad_left ? "L" : "l", gp.dpad_right ? "R" : "r",
+                                gp.left_bumper ? "LB" : "lb", gp.right_bumper ? "RB" : "rb",
+                                gp.left_trigger, gp.right_trigger);
+                    }
+                });
+
+        opMode.telemetry.addData("Drive", "%s",
                         new Func<String>() {
                             @Override
                             public String value() {
-                                return String.format("Left=%+4.1f %5d/sec|Right=%+4.1f %5d/sec",
-                                        leftDrive.getPower(), leftDriveSpeed_perSec,
-                                        rightDrive.getPower(), rightDriveSpeed_perSec);
+                                return String.format("Left=%s|Right=%s",
+                                        leftDrive.getTelemetryString(),
+                                        rightDrive.getTelemetryString());
                             }
                         });
 
@@ -94,8 +120,8 @@ public class Bert_Robot {
                     @Override
                     public String value() {
                         return String.format("hdg=%+6.1f | goal=%+6.1f | err=%+3.0f | raw=%+6.1f",
-                                heading_totalDegreesTurned, desiredHeading,
-                                desiredHeading-heading_totalDegreesTurned,
+                                heading_totalDegreesTurned, desiredHeading_totalDegreesTurned,
+                                desiredHeading_totalDegreesTurned - heading_totalDegreesTurned,
                                 lastImuReading);
                     }
                 });
@@ -103,13 +129,15 @@ public class Bert_Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("Front: pwr=%+5.1f @%d | Lift: pwr=%+5.1f @%d | Back: %.2f",
-                                frontDoor.getPower(), frontDoor.getCurrentPosition(),
-                                liftMotor.getPower(), liftMotor.getCurrentPosition(),
+                        return String.format("Lift: %s | F: %s |  B: %.2f",
+                                liftMotor.getTelemetryString(),
+                                frontDoor.getTelemetryString(),
                                 backDoor.getPosition());
                     }
                 });
-        loop();
+
+        resetArm();
+        sleep(100);
     }
 
     private float _getHeadingFromImu() {
@@ -121,8 +149,7 @@ public class Bert_Robot {
     }
 
     public void setRightPower(double power) {
-        //Negative power on the right is forward, so we need to reverse it
-        rightDrive.setPower(-power);
+        rightDrive.setPower(power);
     }
 
     public void setDrivePower(double power) {
@@ -142,19 +169,25 @@ public class Bert_Robot {
             status = newStatus;
             statusChangedTime_ms = System.currentTimeMillis();
         }
+        loop();
     }
 
-    public void sleep(long mSec) throws InterruptedException {
+    public void sleep(long mSec) {
         long start = System.currentTimeMillis();
         long end   = start + mSec;
 
         while ( System.currentTimeMillis() <= end ) {
             loop();
-            Thread.sleep(10);
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted");
+            }
         }
     }
 
     public void goForward(float inches) throws InterruptedException {
+        desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition+inches*TICKS_PER_INCH);
         setDrivePower(.15);
@@ -164,6 +197,67 @@ public class Bert_Robot {
         }
     }
 
+
+
+    private void resetArm() {
+        liftMotor.disableLimitChecks();
+        liftMotor.setPower(0);
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftMotor.setPower(ARM_DOWN_SPEED_WHEN_RESETTING);
+        // let the arm get moving
+        sleep(100);
+
+        // When to consider the arm-lift motor to have stopped
+        final int stoppedThreshold=25;
+        while ( liftMotor.speed_perSec > stoppedThreshold ) {
+            sleep(100);
+        }
+
+        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        holdArmPosition();
+        liftMotor.enableLimitChecks();
+    }
+
+
+    private void setArmPosition(int position) {
+        if ( position < liftMotor.getCurrentPosition() )
+            liftMotor.setPower(0.3);
+        else
+            liftMotor.setPower(0.5);
+        liftMotor.setTargetPosition(position);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    public void holdArmPosition() {
+        if (liftMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION)
+            setArmPosition(liftMotor.getCurrentPosition());
+    }
+
+
+    private void setArmPower(double power) {
+        if ( power==0 ) {
+            holdArmPosition();
+            return;
+        }
+
+        if (liftMotor.getMode() != DcMotor.RunMode.RUN_WITHOUT_ENCODER)
+            liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        liftMotor.setPower(power);
+    }
+
+    public void moveArmUp() {
+        setArmPower(ARM_LIFT_SPEED);
+    }
+
+    public void moveArmDown() {
+        if ( liftMotor.getCurrentPosition()<500 )
+            setArmPower(ARM_DOWN_SPEED_WHEN_RESETTING);
+        else if (liftMotor.getCurrentPosition() < 1000 )
+            setArmPower( (ARM_DOWN_SPEED_WHEN_RESETTING+ARM_DOWN_SPEED)/2);
+        else
+            setArmPower(ARM_DOWN_SPEED);
+    }
 
     public void backDoorClose() {
         backDoor.setPosition(0.3);
@@ -187,20 +281,9 @@ public class Bert_Robot {
 
         heading_totalDegreesTurned += degreesTurned;
 
-        // Calculate motor speeds
-        long now = System.currentTimeMillis();
-        
-        // Just return if no time has passed
-        if ( now == lastLoopTime_ms )
-            return;
-        
-        long leftDrivePosition = leftDrive.getCurrentPosition();
-        long rightDrivePosition= rightDrive.getCurrentPosition();
-        
-        leftDriveSpeed_perSec = (leftDrivePosition-leftDrivePosition_previous)*1000/(now-lastLoopTime_ms);
-        rightDriveSpeed_perSec = (rightDrivePosition-rightDrivePosition_previous)*1000/(now-lastLoopTime_ms);
-
-        leftDrivePosition_previous = leftDrivePosition;
-        rightDrivePosition_previous= rightDrivePosition;
+        leftDrive.loop();
+        rightDrive.loop();
+        liftMotor.loop();
+        frontDoor.loop();
     }
 }
