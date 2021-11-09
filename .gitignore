@@ -86,3 +86,6 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+*.hprof
+Trc492Lib/src/main/java/TrcFtcLib/
+Trc492Lib/src/main/java/TrcCommonLib/
