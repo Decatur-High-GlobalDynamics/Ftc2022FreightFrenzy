@@ -3,7 +3,7 @@ package DhsTeamCode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name="Bert_Auto1", group="Testing")
+@TeleOp(name="Dhs2ndAuto", group="Testing")
 public class Dhs2ndAuto extends LinearOpMode {
     Bert_Robot robot;
 

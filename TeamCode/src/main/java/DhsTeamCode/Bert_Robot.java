@@ -1,6 +1,7 @@
 package DhsTeamCode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.motors.TetrixMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -26,6 +27,7 @@ public class Bert_Robot {
     BertDcMotor leftDrive, rightDrive;
     BertDcMotor liftMotor, frontDoor;
     Servo backDoor;
+    BertDcMotor turn_table;
 
     long lastLoopTime_ms = System.currentTimeMillis();
 
@@ -49,6 +51,8 @@ public class Bert_Robot {
         liftMotor=new BertDcMotor(opMode, "cage_lift");
         liftMotor.setMinimumPosition(0);
         liftMotor.setMaximumPosition(ARM_LIMIT_POSITION);
+
+        turn_table=new BertDcMotor(opMode, "turn_table");
 
         frontDoor=new BertDcMotor(opMode, "front_door");
 
@@ -211,7 +215,7 @@ public class Bert_Robot {
     }
     public void turnLeft(float degrees) throws InterruptedException {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
-        double startHeading= heading_totalDegreesTurned
+        double startHeading= heading_totalDegreesTurned;
         double endHeading= startHeading-degrees;
         setLeftPower(-0.15);setRightPower(0.15);
 
@@ -222,7 +226,7 @@ public class Bert_Robot {
     }
     public void turnRight(float degrees) throws InterruptedException {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
-        double startHeading= heading_totalDegreesTurned
+        double startHeading= heading_totalDegreesTurned;
         double endHeading= startHeading+degrees;
         setLeftPower(0.15);setRightPower(-0.15);
 
@@ -322,4 +326,20 @@ public class Bert_Robot {
         liftMotor.loop();
         frontDoor.loop();
     }
+    public void turntableOn(){
+        setTurntablePower(1);
+    }
+
+    public void turntableOff(){
+        setTurntablePower(0);
+    }
+
+
+    public void setTurntablePower(double percent) {
+        final double MAX_POWER=1.0;
+
+        turn_table.setPower(MAX_POWER*percent);
+        turn_table.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 }
+

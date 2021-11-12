@@ -56,5 +56,11 @@ public class Bert_TeleOp2 extends OpMode {
             robot.frontDoor.setPower(-0.25);
         else
             robot.frontDoor.setPower(0);
+
+
+
+        robot.setTurntablePower(gamepad2.right_trigger);
+
     }
+
 }
