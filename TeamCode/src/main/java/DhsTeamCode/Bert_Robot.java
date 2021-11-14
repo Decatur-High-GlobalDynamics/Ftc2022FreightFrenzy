@@ -53,6 +53,7 @@ public class Bert_Robot {
         liftMotor.setMaximumPosition(ARM_LIMIT_POSITION);
 
         turn_table=new BertDcMotor(opMode, "turn_table");
+        turn_table.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         frontDoor=new BertDcMotor(opMode, "front_door");
 
@@ -188,13 +189,15 @@ public class Bert_Robot {
                 throw new RuntimeException("Interrupted");
             }
         }
+        // Make sure we do at least one loop
+        loop();
     }
 
     public void goForward(float inches) throws InterruptedException {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition+inches*TICKS_PER_INCH);
-        setDrivePower(.15);
+        setDrivePower(.40);
 
         while(leftDrive.getCurrentPosition()<endPosition){
             sleep(10);
@@ -206,7 +209,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition-inches*TICKS_PER_INCH);
-        setDrivePower(-.15);
+        setDrivePower(-.40);
 
         while(leftDrive.getCurrentPosition()>endPosition){
             sleep(10);
@@ -217,7 +220,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         double startHeading= heading_totalDegreesTurned;
         double endHeading= startHeading-degrees;
-        setLeftPower(-0.15);setRightPower(0.15);
+        setLeftPower(-0.30);setRightPower(0.30);
 
         while(heading_totalDegreesTurned>endHeading){
             sleep(10);
@@ -228,7 +231,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         double startHeading= heading_totalDegreesTurned;
         double endHeading= startHeading+degrees;
-        setLeftPower(0.15);setRightPower(-0.15);
+        setLeftPower(0.30);setRightPower(-0.30);
 
         while(heading_totalDegreesTurned<endHeading){
             sleep(10);
@@ -325,15 +328,8 @@ public class Bert_Robot {
         rightDrive.loop();
         liftMotor.loop();
         frontDoor.loop();
+        turn_table.loop();
     }
-    public void turntableOn(){
-        setTurntablePower(1);
-    }
-
-    public void turntableOff(){
-        setTurntablePower(0);
-    }
-
 
     public void setTurntablePower(double percent) {
         final double MAX_POWER=1.0;

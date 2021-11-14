@@ -2,10 +2,11 @@ package DhsTeamCode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name="Bert_TeleOp2", group="Testing")
-public class Bert_TeleOp2 extends OpMode {
+import org.opencv.core.Mat;
+
+@TeleOp(name="DhsSingleJoystick", group="Testing")
+public class DhsTeleop_SingleJoystick extends OpMode {
     Bert_Robot robot;
 
     @Override
@@ -21,13 +22,43 @@ public class Bert_TeleOp2 extends OpMode {
 
         // Gamepad joysticks return negative numbers when pushed forward,
         // so we invert them here so forward makes the robot go forward
+
+       double x=gamepad1.left_stick_x;
+       double y=gamepad1.left_stick_y;
+       // Power is how far joystick is from the center
+       double power= Math.sqrt(x*x + y*y);
+       double leftpower, rightpower;
+
+       // Split joystick into 4 quadrants:
+       //    X is <0 (Left)    or >0 (Right)
+       //    Y is <0 (Forward) or >0 (Back)
+       if (x>0 && y<0) {
+           //q1... forward and to the right
+           leftpower=power;
+           rightpower=-power*y;
+
+       } else if (x<0 && y<0) {
+           //q2... forward and to the left
+           leftpower = -power * y;
+           rightpower = power;
+
+       } else if (x<0 && y<0){
+            //q3... backwards and to the left
+            leftpower = power;
+            rightpower = -power*y;
+        } else {
+            //q4... backwards and to the right
+            leftpower=-power;
+            rightpower=-power*y;
+        }
+
         if (gamepad1.left_bumper){
-            robot.setLeftPower(-gamepad1.left_stick_y*0.5);
-            robot.setRightPower(-gamepad1.right_stick_y*0.5);
+            robot.setLeftPower(leftpower*0.5);
+            robot.setRightPower(rightpower*0.5);
 
         } else {
-            robot.setLeftPower(-gamepad1.left_stick_y);
-            robot.setRightPower(-gamepad1.right_stick_y);
+            robot.setLeftPower(leftpower);
+            robot.setRightPower(rightpower);
         }
 
 

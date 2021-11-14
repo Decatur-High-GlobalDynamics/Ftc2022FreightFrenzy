@@ -17,20 +17,19 @@ public class DHSmeasureEncoders extends LinearOpMode {
         }
 
         int startPosition=robot.rightDrive.getCurrentPosition();
-        int endPosition= startPosition+10000;
-        robot.setLeftPower(0.2);
-        robot.setRightPower(0.2);
+        int endPosition= startPosition+5000;
+        robot.setLeftPower(0.3);
+        robot.setRightPower(0.3);
 
-        while (robot.rightDrive.getCurrentPosition() <endPosition) {
+        while (!isStopRequested() && robot.rightDrive.getCurrentPosition() <endPosition) {
             sleep(100);
             telemetry.update();
         }
 
-
         robot.setLeftPower(0);
         robot.setRightPower(0);
 
-        while (true) {
+        while (!isStopRequested()) {
             sleep(100);
             telemetry.update();
         }
