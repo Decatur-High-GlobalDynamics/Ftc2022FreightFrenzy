@@ -32,17 +32,17 @@ public class DhsTeleop_SingleJoystick extends OpMode {
        // Split joystick into 4 quadrants:
        //    X is <0 (Left)    or >0 (Right)
        //    Y is <0 (Forward) or >0 (Back)
-       if (x>0 && y<0) {
+       if (x>=0 && y<=0) {
            //q1... forward and to the right
            leftpower=power;
            rightpower=-power*y;
 
-       } else if (x<0 && y<0) {
+       } else if (x<=0 && y<=0) {
            //q2... forward and to the left
            leftpower = -power * y;
            rightpower = power;
 
-       } else if (x<0 && y<0){
+       } else if (x<=0 && y<=0){
             //q3... backwards and to the left
             leftpower = power;
             rightpower = -power*y;
