@@ -22,6 +22,22 @@ public class Bert_Robot {
     public final double ARM_DOWN_SPEED_WHEN_RESETTING=-0.10;
     public final double ARM_LIFT_SPEED = 0.30;
     public final double ARM_DOWN_SPEED = -0.20;
+    public final Servo leftWhisker;
+    public final Servo rightWhisker;
+    public final double LEFTWHISKER_STARTPOSITION=0;
+    public final double RIGHTWHISKER_STARTPOSITION=1.0;
+    public final double RIGHTWHISKER_MAXPOSITION=.2;
+    public final double LEFTWHISKER_MAXPOSITION=.6;
+    public final double LEFTWHISKER_MIDPOSITION=.3;
+    public final double RIGHTWHISKER_MIDPOSITION=.5;
+
+
+
+
+
+
+
+
 
     OpMode opMode;
     BertDcMotor leftDrive, rightDrive;
@@ -57,7 +73,16 @@ public class Bert_Robot {
 
         frontDoor=new BertDcMotor(opMode, "front_door");
 
+
         backDoor  = opMode.hardwareMap.servo.get("back_door");
+
+        leftWhisker  = opMode.hardwareMap.servo.get("left_whisker");
+
+        rightWhisker  = opMode.hardwareMap.servo.get("right_whisker");
+
+        leftWhisker.setPosition(0.5);
+
+        rightWhisker.setPosition(0.5);
 
         imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -138,6 +163,17 @@ public class Bert_Robot {
                                 liftMotor.getTelemetryString(),
                                 frontDoor.getTelemetryString(),
                                 backDoor.getPosition());
+                    }
+                });
+        opMode.telemetry.addData("Whiskers", "%s",
+                new Func<String>() {
+                    @Override
+                    public String value() {
+                        return String.format("Left: %.2f | Right: %.2f" ,
+                                leftWhisker.getPosition(),
+                                rightWhisker.getPosition());
+
+
                     }
                 });
 

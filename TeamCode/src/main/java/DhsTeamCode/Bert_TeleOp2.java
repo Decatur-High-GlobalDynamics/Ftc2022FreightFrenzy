@@ -66,7 +66,20 @@ public class Bert_TeleOp2 extends OpMode {
         if (gamepad2.left_bumper)
             turntablePower = -1*turntablePower;
 
+<<<<<<< Updated upstream
         robot.setTurntablePower(turntablePower);
+=======
+        if (gamepad2.left_stick_x < -0.1)
+            robot.leftWhisker.setPosition(robot.leftWhisker.getPosition()-0.05);
+        else if (gamepad2.left_stick_x > 0.1)
+            robot.leftWhisker.setPosition(robot.leftWhisker.getPosition()+0.05);
+        if (gamepad2.right_stick_x < -0.1)
+            robot.rightWhisker.setPosition(robot.rightWhisker.getPosition()-0.05);
+        else if (gamepad2.right_stick_x > 0.1)
+            robot.rightWhisker.setPosition(robot.rightWhisker.getPosition()+0.05);
+
+
+>>>>>>> Stashed changes
     }
 
 }
