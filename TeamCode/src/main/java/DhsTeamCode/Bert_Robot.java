@@ -1,16 +1,20 @@
 package DhsTeamCode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.motors.TetrixMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 
 public class Bert_Robot {
+    // Safety values to keep robot from falling over
+    public final double MAX_FORWARD_TILT = 13.0; // From experimenting with robot
+    public final double MAX_BACKWARD_POWER_WHEN_TILTED = 0.2; // From rough experiments
+
     public final double TICKS_PER_INCH = 10000/84.75;
 
     public final int ARM_BOTTOM_POSITION=0,
@@ -31,13 +35,7 @@ public class Bert_Robot {
     public final double LEFTWHISKER_MIDPOSITION=.3;
     public final double RIGHTWHISKER_MIDPOSITION=.5;
 
-
-
-
-
-
-
-
+    public final double WHISKER_SPEED =0.05;
 
     OpMode opMode;
     BertDcMotor leftDrive, rightDrive;
@@ -45,11 +43,16 @@ public class Bert_Robot {
     Servo backDoor;
     BertDcMotor turn_table;
 
+    // Is Arm in front?
+    //   The left/right motors are defined by arm being in front
+    //   but this boolean switches this.
+    boolean armIsInFrontOfRobot=true;
+
     long lastLoopTime_ms = System.currentTimeMillis();
 
     // Gyro variables
     float heading_totalDegreesTurned, desiredHeading_totalDegreesTurned;
-    float lastImuReading;
+    float lastImuReading1, lastImuReading2, lastImuReading3;
 
     BNO055IMU imu;
     long initializedTime_ms = System.currentTimeMillis();
@@ -72,17 +75,10 @@ public class Bert_Robot {
         turn_table.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         frontDoor=new BertDcMotor(opMode, "front_door");
-
-
         backDoor  = opMode.hardwareMap.servo.get("back_door");
 
         leftWhisker  = opMode.hardwareMap.servo.get("left_whisker");
-
         rightWhisker  = opMode.hardwareMap.servo.get("right_whisker");
-
-        leftWhisker.setPosition(0.5);
-
-        rightWhisker.setPosition(0.5);
 
         imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -91,7 +87,7 @@ public class Bert_Robot {
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
         imu.initialize(parameters);
-        lastImuReading = heading_totalDegreesTurned = _getHeadingFromImu();
+        lastImuReading1 = heading_totalDegreesTurned = _getHeadingFromImu();
 
         opMode.telemetry.addData("Robot", "%s",
                 new Func<String>() {
@@ -140,8 +136,8 @@ public class Bert_Robot {
                             @Override
                             public String value() {
                                 return String.format("Left=%s|Right=%s",
-                                        leftDrive.getTelemetryString(),
-                                        rightDrive.getTelemetryString());
+                                        armIsInFrontOfRobot ? leftDrive.getTelemetryString() : rightDrive.getTelemetryString(),
+                                        armIsInFrontOfRobot ? rightDrive.getTelemetryString() : leftDrive.getTelemetryString());
                             }
                         });
 
@@ -149,10 +145,10 @@ public class Bert_Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("hdg=%+6.1f | goal=%+6.1f | err=%+3.0f | raw=%+6.1f",
+                        return String.format("hdg=%+6.1f | goal=%+6.1f | err=%+3.0f | raw=%+6.1f/%+6.1f/%+6.1f",
                                 heading_totalDegreesTurned, desiredHeading_totalDegreesTurned,
                                 desiredHeading_totalDegreesTurned - heading_totalDegreesTurned,
-                                lastImuReading);
+                                lastImuReading1, lastImuReading2, lastImuReading3);
                     }
                 });
         opMode.telemetry.addData("Arm", "%s",
@@ -185,12 +181,40 @@ public class Bert_Robot {
         return imu.getAngularOrientation().firstAngle;
     }
 
+    private float _getAngle2FromImu() {
+        return imu.getAngularOrientation().secondAngle;
+    }
+    private float _getAngle3FromImu() {
+        return imu.getAngularOrientation().thirdAngle;
+    }
+    /**
+     * Set the left power, based on whether robot is reversed
+     * @param power
+     */
     public void setLeftPower(double power) {
-        leftDrive.setPower(power);
+        // the robot falls when it's going backwards too fast (the power is negative)
+        if (  lastImuReading2>MAX_FORWARD_TILT && power < -MAX_BACKWARD_POWER_WHEN_TILTED)
+            power = -MAX_BACKWARD_POWER_WHEN_TILTED;
+
+        if ( armIsInFrontOfRobot )
+            leftDrive.setPower(power);
+        else
+            rightDrive.setPower(-power);
     }
 
+    /**
+     * set the right power, based on whether robot is reversed
+     * @param power
+     */
     public void setRightPower(double power) {
-        rightDrive.setPower(power);
+        // the robot falls when it's going backwards too fast (the power is negative)
+        if (  lastImuReading2>MAX_FORWARD_TILT && power < -MAX_BACKWARD_POWER_WHEN_TILTED)
+            power = -MAX_BACKWARD_POWER_WHEN_TILTED;
+
+        if ( armIsInFrontOfRobot )
+            rightDrive.setPower(power);
+        else
+            leftDrive.setPower(-power);
     }
 
     public void setDrivePower(double power) {
@@ -295,6 +319,13 @@ public class Bert_Robot {
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         holdArmPosition();
         liftMotor.enableLimitChecks();
+
+        // Reset the arm whiskers, but first move the front dorr out of the way
+        frontDoor.setPower(0.1);
+        sleep(1500);
+        moveBothWhiskersFullyIn();
+        frontDoor.setPower(-0.1);
+        sleep(1000);
     }
 
 
@@ -349,8 +380,10 @@ public class Bert_Robot {
     public void loop() {
         // Update heading
         float imuReading = _getHeadingFromImu();
-        float degreesTurned = imuReading - lastImuReading;
-        lastImuReading = imuReading;
+        float degreesTurned = imuReading - lastImuReading1;
+        lastImuReading1 = imuReading;
+        lastImuReading2 = _getAngle2FromImu();
+        lastImuReading3 = _getAngle3FromImu();
 
         // Check for wrapping around (suddenly we will have turned a lot)
         if ( degreesTurned > 180 )
@@ -372,6 +405,40 @@ public class Bert_Robot {
 
         turn_table.setPower(MAX_POWER*percent);
         turn_table.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void moveBothWhiskersIn() {
+        if ( leftWhisker.getPosition() < LEFTWHISKER_MIDPOSITION )
+            leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
+        if ( rightWhisker.getPosition() > RIGHTWHISKER_MIDPOSITION )
+            rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
+
+        leftWhisker.setPosition(Range.clip(leftWhisker.getPosition() - WHISKER_SPEED, LEFTWHISKER_MIDPOSITION, LEFTWHISKER_MAXPOSITION));
+        rightWhisker.setPosition(Range.clip(rightWhisker.getPosition()+ WHISKER_SPEED, RIGHTWHISKER_MAXPOSITION, RIGHTWHISKER_MIDPOSITION));
+    }
+
+    public void moveBothWhiskersOut() {
+        if ( leftWhisker.getPosition() < LEFTWHISKER_MIDPOSITION )
+            leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
+        if ( rightWhisker.getPosition() > RIGHTWHISKER_MIDPOSITION )
+            rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
+
+        leftWhisker.setPosition(Range.clip(leftWhisker.getPosition() + WHISKER_SPEED, LEFTWHISKER_MIDPOSITION, LEFTWHISKER_MAXPOSITION));
+        rightWhisker.setPosition(Range.clip(rightWhisker.getPosition()- WHISKER_SPEED, RIGHTWHISKER_MAXPOSITION, RIGHTWHISKER_MIDPOSITION));
+    }
+
+    public void parkWhiskers() {
+        leftWhisker.setPosition(LEFTWHISKER_STARTPOSITION);
+        rightWhisker.setPosition(RIGHTWHISKER_STARTPOSITION);
+    }
+
+    public void moveBothWhiskersFullyOut() {
+        leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
+        rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
+    }
+    public void moveBothWhiskersFullyIn() {
+        leftWhisker.setPosition(LEFTWHISKER_STARTPOSITION);
+        rightWhisker.setPosition(RIGHTWHISKER_STARTPOSITION);
     }
 }
 

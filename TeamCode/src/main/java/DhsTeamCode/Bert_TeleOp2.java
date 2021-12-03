@@ -19,25 +19,33 @@ public class Bert_TeleOp2 extends OpMode {
         robot.noteThatOpModeStarted();
         robot.updateStatus("looping");
 
-        // Gamepad joysticks return negative numbers when pushed forward,
-        // so we invert them here so forward makes the robot go forward
-        if (gamepad1.left_bumper){
-            robot.setLeftPower(-gamepad1.left_stick_y*0.5);
-            robot.setRightPower(-gamepad1.right_stick_y*0.5);
+        // Two modes for driving:
+        //  1. Gamepad2: go forward slowly when right joystick is moved
+        //  2. Gamepad1: Normal two-stick driving
 
+        if ( gamepad2.right_stick_y < -0.1 ) {
+            // go forward slowly
+            robot.setDrivePower(0.2);
+        } else if ( gamepad2.right_stick_y > 0.1 ) {
+            robot.setDrivePower(-0.2);
         } else {
-            robot.setLeftPower(-gamepad1.left_stick_y);
-            robot.setRightPower(-gamepad1.right_stick_y);
+            // Gamepad joysticks return negative numbers when pushed forward,
+            // so we invert them here so forward makes the robot go forward
+            if (gamepad1.left_bumper) {
+                robot.setLeftPower(-gamepad1.left_stick_y * 0.5);
+                robot.setRightPower(-gamepad1.right_stick_y * 0.5);
+            } else {
+                robot.setLeftPower(-gamepad1.left_stick_y);
+                robot.setRightPower(-gamepad1.right_stick_y);
+            }
         }
 
 
-        if ( gamepad2.dpad_up ) {
+        if (gamepad2.dpad_up) {
             robot.moveArmUp();
-        }
-        else if ( gamepad2.dpad_down ) {
+        } else if (gamepad2.dpad_down) {
             robot.moveArmDown();
-        }
-        else {
+        } else {
             robot.holdArmPosition();
         }
 
@@ -50,12 +58,13 @@ public class Bert_TeleOp2 extends OpMode {
 
         if (gamepad2.b)
             // Open front door
-            robot.frontDoor.setPower(0.1);
-        else if (gamepad2.a)
-            // Close front door
+            robot.frontDoor.setPower(0.2);
+        else if (gamepad2.a) {
+            // Move whiskers out of the way and Close front door
+            robot.moveBothWhiskersFullyOut();
             robot.frontDoor.setPower(-0.25);
-        else
-            robot.frontDoor.setPower(0);
+        } else
+            robot.frontDoor.setPower(0.025);
 
         // Only turned in one direction
         //robot.setTurntablePower(gamepad2.right_trigger);
@@ -64,22 +73,20 @@ public class Bert_TeleOp2 extends OpMode {
 
         // GP2 LeftBumper reverses the direction
         if (gamepad2.left_bumper)
-            turntablePower = -1*turntablePower;
+            turntablePower = -1 * turntablePower;
 
-<<<<<<< Updated upstream
         robot.setTurntablePower(turntablePower);
-=======
-        if (gamepad2.left_stick_x < -0.1)
-            robot.leftWhisker.setPosition(robot.leftWhisker.getPosition()-0.05);
-        else if (gamepad2.left_stick_x > 0.1)
-            robot.leftWhisker.setPosition(robot.leftWhisker.getPosition()+0.05);
-        if (gamepad2.right_stick_x < -0.1)
-            robot.rightWhisker.setPosition(robot.rightWhisker.getPosition()-0.05);
-        else if (gamepad2.right_stick_x > 0.1)
-            robot.rightWhisker.setPosition(robot.rightWhisker.getPosition()+0.05);
 
 
->>>>>>> Stashed changes
+        if (gamepad2.left_stick_x > 0.1 || gamepad2.left_stick_y < -0.1)
+            // DOwn or right close whiskers
+            robot.moveBothWhiskersIn();
+        else
+            robot.moveBothWhiskersOut();
+
+
+        if (gamepad2.left_stick_button)
+            robot.moveBothWhiskersFullyOut();
     }
 
-}
+    }
