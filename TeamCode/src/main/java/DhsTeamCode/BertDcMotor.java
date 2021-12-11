@@ -17,7 +17,8 @@ public class BertDcMotor  {
     int previousPosition;
     int currentPosition;
     int speed_raw, speed_perSec;
-    private Integer minimumPosition, maximumPosition;
+    private Integer minimumSafetyPosition, maximumSafetyPosition;
+    private Integer minPositionSeen, maxPositionSeen;
     private boolean limitsEnabled=false;
 
     public BertDcMotor(OpMode opMode, String name) {
@@ -42,15 +43,21 @@ public class BertDcMotor  {
         currentPosition = motor.getCurrentPosition();
         speed_raw = currentPosition - previousPosition;
 
+        // Make note of the min and max positions ever seen for this motor
+        if ( minPositionSeen==null || minPositionSeen>currentPosition )
+            minPositionSeen=currentPosition;
+        if ( maxPositionSeen==null || maxPositionSeen<currentPosition )
+            maxPositionSeen=currentPosition;
+
         if ( elapsed_ms == 0 )
             speed_perSec = 0;
         else
             speed_perSec = (int)(1000 * speed_raw/elapsed_ms);
 
         if ( limitsEnabled ) {
-            if ( minimumPosition != null && motor.getPower()<0 && currentPosition<=minimumPosition )
+            if ( minimumSafetyPosition != null && motor.getPower()<0 && currentPosition<= minimumSafetyPosition)
                 motor.setPower(0);
-            if ( maximumPosition != null && motor.getPower()>0 && currentPosition>=maximumPosition)
+            if ( maximumSafetyPosition != null && motor.getPower()>0 && currentPosition>= maximumSafetyPosition)
                 motor.setPower(0);
         }
     }
@@ -62,14 +69,26 @@ public class BertDcMotor  {
                     return String.format("Busy %d-->%d (%5.2f) (%d/s)",
                             currentPosition, motor.getTargetPosition(), motor.getPower(), speed_perSec);
                 else
-                    return String.format("%5.2f hold@%d (%d/s)",
+                    return String.format("Hold %5.2f hold@%d (%d/s)",
                             motor.getPower(), currentPosition, speed_perSec);
-
             case RUN_USING_ENCODER:
-                return String.format("s=%+5.2f (%d/s)", motor.getPower(), speed_perSec);
+                return String.format("spd %+5.2f @%d *%d/s*", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+            case RUN_WITHOUT_ENCODER:
+                return String.format("pow %+5.2f @%d (%d/s)", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+            case STOP_AND_RESET_ENCODER:
+                return String.format("reset %+5.2f @%d (%d/s)", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
             default:
-                return String.format("%+5.2f (%d/s)", motor.getPower(), speed_perSec);
+                return String.format("unk %+5.2f @%d (%d/s)", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+
         }
+    }
+
+    public int getMotorPositionAboveMinimumSeen() {
+        return currentPosition-minPositionSeen;
+    }
+
+    public int getMotorPositionBelowMaximumSeen() {
+        return maxPositionSeen-currentPosition;
     }
 
     /**
@@ -148,6 +167,11 @@ public class BertDcMotor  {
      */
     public void setMode(DcMotor.RunMode mode) {
         motor.setMode(mode);
+
+        // If the encoder is being reset, then note that the min/max positions have changed
+        if ( mode == DcMotor.RunMode.STOP_AND_RESET_ENCODER ) {
+            minPositionSeen = maxPositionSeen = 0;
+        }
     }
 
     /**
@@ -202,13 +226,13 @@ public class BertDcMotor  {
         return motor.getPower();
     }
 
-    public void setMinimumPosition(int _minimumPosition) {
-        minimumPosition = _minimumPosition;
+    public void setMinimumSafetyPosition(int _minimumSafetyPosition) {
+        minimumSafetyPosition = _minimumSafetyPosition;
         limitsEnabled = true;
     }
 
-    public void setMaximumPosition(int _maximumPosition) {
-        maximumPosition = _maximumPosition;
+    public void setMaximumSafetyPosition(int _maximumSafetyPosition) {
+        maximumSafetyPosition = _maximumSafetyPosition;
         limitsEnabled = true;
     }
 

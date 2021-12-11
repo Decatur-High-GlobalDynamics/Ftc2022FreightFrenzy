@@ -11,9 +11,16 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.Func;
 
 public class Bert_Robot {
+
+    public static final double FRONT_DOOR_CLOSE_POWER = -0.25;
+    public static final double FRONT_DOOR_OPEN_POWER = 0.2;
+    public static final double FRONT_DOOR_HOLD_POWER = 0.1;
+
     // Safety values to keep robot from falling over
-    public final double MAX_FORWARD_TILT = 13.0; // From experimenting with robot
-    public final double MAX_BACKWARD_POWER_WHEN_TILTED = 0.2; // From rough experiments
+    public final double FORWARD_TILT_WARNING_ANGLE=5, FORWARD_TILT_PANIC = 13.0; // From experimenting with robot
+    public final double MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY = -0.2; // From rough experiments
+    public static final double TILT_PANIC_RECOVERY_POWER = 0;
+    public boolean tiltprotectionenabled=true;
 
     public final double TICKS_PER_INCH = 10000/84.75;
 
@@ -28,6 +35,11 @@ public class Bert_Robot {
     public final double ARM_DOWN_SPEED = -0.20;
     public final Servo leftWhisker;
     public final Servo rightWhisker;
+
+    // Where does the front door get out of the way of the whiskers
+    // This was found through experimentation
+    public final int FRONT_DOOR_POSITION_ABOVE_WHISKERS = 150;
+
     public final double LEFTWHISKER_STARTPOSITION=0;
     public final double RIGHTWHISKER_STARTPOSITION=1.0;
     public final double RIGHTWHISKER_MAXPOSITION=.2;
@@ -35,7 +47,7 @@ public class Bert_Robot {
     public final double LEFTWHISKER_MIDPOSITION=.3;
     public final double RIGHTWHISKER_MIDPOSITION=.5;
 
-    public final double WHISKER_SPEED =0.05;
+    public final double WHISKER_SPEED =0.15;
 
     OpMode opMode;
     BertDcMotor leftDrive, rightDrive;
@@ -49,6 +61,7 @@ public class Bert_Robot {
     boolean armIsInFrontOfRobot=true;
 
     long lastLoopTime_ms = System.currentTimeMillis();
+    long durationOfLastLoop_ms = 1;
 
     // Gyro variables
     float heading_totalDegreesTurned, desiredHeading_totalDegreesTurned;
@@ -68,13 +81,16 @@ public class Bert_Robot {
         leftDrive=new BertDcMotor(opMode, "left_drive");
 
         liftMotor=new BertDcMotor(opMode, "cage_lift");
-        liftMotor.setMinimumPosition(0);
-        liftMotor.setMaximumPosition(ARM_LIMIT_POSITION);
+        liftMotor.setMinimumSafetyPosition(0);
+        liftMotor.setMaximumSafetyPosition(ARM_LIMIT_POSITION);
 
         turn_table=new BertDcMotor(opMode, "turn_table");
         turn_table.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         frontDoor=new BertDcMotor(opMode, "front_door");
+        frontDoor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontDoor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         backDoor  = opMode.hardwareMap.servo.get("back_door");
 
         leftWhisker  = opMode.hardwareMap.servo.get("left_whisker");
@@ -94,9 +110,10 @@ public class Bert_Robot {
                     @Override
                     public String value() {
                         long now_ms = System.currentTimeMillis();
-                        return String.format("t=%3ds/%3ds|%s (%3ds)",
+                        return String.format("t_init=%3ds t_run=%3ds %d loops/sec|%s (%3ds)",
                                 (now_ms - initializedTime_ms)/1000,
                                 opModeStarted_ms==-1 ? -1 : (now_ms-opModeStarted_ms)/1000,
+                                durationOfLastLoop_ms == 0 ? 0 : 1000/durationOfLastLoop_ms,
                                 status, (now_ms - statusChangedTime_ms)/1000);
                     }
                 });
@@ -145,7 +162,7 @@ public class Bert_Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("hdg=%+6.1f | goal=%+6.1f | err=%+3.0f | raw=%+6.1f/%+6.1f/%+6.1f",
+                        return String.format("hdg=%+.1f | goal=%+.1f | err=%+.1f | raw=%+.1f/%+.1f/%+.1f",
                                 heading_totalDegreesTurned, desiredHeading_totalDegreesTurned,
                                 desiredHeading_totalDegreesTurned - heading_totalDegreesTurned,
                                 lastImuReading1, lastImuReading2, lastImuReading3);
@@ -192,10 +209,13 @@ public class Bert_Robot {
      * @param power
      */
     public void setLeftPower(double power) {
-        // the robot falls when it's going backwards too fast (the power is negative)
-        if (  lastImuReading2>MAX_FORWARD_TILT && power < -MAX_BACKWARD_POWER_WHEN_TILTED)
-            power = -MAX_BACKWARD_POWER_WHEN_TILTED;
-
+        if (tiltprotectionenabled) {
+            // the robot falls when it's going backwards too fast (the power is negative)
+            if (lastImuReading2 > FORWARD_TILT_PANIC && power <= TILT_PANIC_RECOVERY_POWER)
+                power = TILT_PANIC_RECOVERY_POWER;
+            else if (lastImuReading2 > FORWARD_TILT_WARNING_ANGLE && power < MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY)
+                power = MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY;
+        }
         if ( armIsInFrontOfRobot )
             leftDrive.setPower(power);
         else
@@ -208,9 +228,12 @@ public class Bert_Robot {
      */
     public void setRightPower(double power) {
         // the robot falls when it's going backwards too fast (the power is negative)
-        if (  lastImuReading2>MAX_FORWARD_TILT && power < -MAX_BACKWARD_POWER_WHEN_TILTED)
-            power = -MAX_BACKWARD_POWER_WHEN_TILTED;
-
+        if (tiltprotectionenabled) {
+            if (lastImuReading2 > FORWARD_TILT_PANIC && power <= TILT_PANIC_RECOVERY_POWER)
+                power = TILT_PANIC_RECOVERY_POWER;
+            else if (lastImuReading2 > FORWARD_TILT_WARNING_ANGLE && power < MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY)
+                power = MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY;
+        }
         if ( armIsInFrontOfRobot )
             rightDrive.setPower(power);
         else
@@ -257,7 +280,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition+inches*TICKS_PER_INCH);
-        setDrivePower(.40);
+        setDrivePower(0.40);
 
         while(leftDrive.getCurrentPosition()<endPosition){
             sleep(10);
@@ -269,7 +292,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition-inches*TICKS_PER_INCH);
-        setDrivePower(-.40);
+        setDrivePower(-0.40);
 
         while(leftDrive.getCurrentPosition()>endPosition){
             sleep(10);
@@ -311,7 +334,7 @@ public class Bert_Robot {
         sleep(100);
 
         // When to consider the arm-lift motor to have stopped
-        final int stoppedThreshold=25;
+        final int stoppedThreshold = 25;
         while ( liftMotor.speed_perSec > stoppedThreshold ) {
             sleep(100);
         }
@@ -320,12 +343,15 @@ public class Bert_Robot {
         holdArmPosition();
         liftMotor.enableLimitChecks();
 
-        // Reset the arm whiskers, but first move the front dorr out of the way
-        frontDoor.setPower(0.1);
-        sleep(1500);
-        moveBothWhiskersFullyIn();
-        frontDoor.setPower(-0.1);
+        // Reset the arm whiskers, but first move the front door out of the way
+        openFrontDoor();
         sleep(1000);
+        resetBothWhiskersFullyIn();
+        closeFrontDoor();
+        // Wait until it's closed
+        while ( Math.abs(frontDoor.speed_perSec) > stoppedThreshold )
+            sleep(100);
+        holdFrontDoor();
     }
 
 
@@ -345,7 +371,7 @@ public class Bert_Robot {
 
 
     private void setArmPower(double power) {
-        if ( power==0 ) {
+        if ( power == 0 ) {
             holdArmPosition();
             return;
         }
@@ -377,7 +403,23 @@ public class Bert_Robot {
         backDoor.setPosition(0);
     }
 
+    public void openFrontDoor() {
+        frontDoor.setPower(FRONT_DOOR_OPEN_POWER);
+    }
+
+    public void closeFrontDoor() {
+        frontDoor.setPower(FRONT_DOOR_CLOSE_POWER);
+    }
+
+    public void holdFrontDoor() {
+        frontDoor.setPower(0);
+    }
+
     public void loop() {
+        long now_ms = System.currentTimeMillis();
+        durationOfLastLoop_ms = now_ms - lastLoopTime_ms;
+        lastLoopTime_ms = now_ms;
+
         // Update heading
         float imuReading = _getHeadingFromImu();
         float degreesTurned = imuReading - lastImuReading1;
@@ -401,13 +443,17 @@ public class Bert_Robot {
     }
 
     public void setTurntablePower(double percent) {
-        final double MAX_POWER=1.0;
+        final double MAX_POWER = 1.0;
 
-        turn_table.setPower(MAX_POWER*percent);
+        turn_table.setPower(MAX_POWER * percent);
         turn_table.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void moveBothWhiskersIn() {
+        // Don't move whiskers if the front door is in the way
+        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
+            return;
+
         if ( leftWhisker.getPosition() < LEFTWHISKER_MIDPOSITION )
             leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
         if ( rightWhisker.getPosition() > RIGHTWHISKER_MIDPOSITION )
@@ -418,25 +464,39 @@ public class Bert_Robot {
     }
 
     public void moveBothWhiskersOut() {
+        // Don't move whiskers if the front door is in the way
+        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
+            return;
+
         if ( leftWhisker.getPosition() < LEFTWHISKER_MIDPOSITION )
             leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
         if ( rightWhisker.getPosition() > RIGHTWHISKER_MIDPOSITION )
             rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
 
         leftWhisker.setPosition(Range.clip(leftWhisker.getPosition() + WHISKER_SPEED, LEFTWHISKER_MIDPOSITION, LEFTWHISKER_MAXPOSITION));
-        rightWhisker.setPosition(Range.clip(rightWhisker.getPosition()- WHISKER_SPEED, RIGHTWHISKER_MAXPOSITION, RIGHTWHISKER_MIDPOSITION));
+        rightWhisker.setPosition(Range.clip(rightWhisker.getPosition() - WHISKER_SPEED, RIGHTWHISKER_MAXPOSITION, RIGHTWHISKER_MIDPOSITION));
     }
 
     public void parkWhiskers() {
+        // Don't move whiskers if the front door is in the way
+        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
+            return;
+
         leftWhisker.setPosition(LEFTWHISKER_STARTPOSITION);
         rightWhisker.setPosition(RIGHTWHISKER_STARTPOSITION);
     }
 
     public void moveBothWhiskersFullyOut() {
+        // Don't move whiskers if the front door is in the way
+        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
+            return;
+
         leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
         rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
     }
-    public void moveBothWhiskersFullyIn() {
+    public void resetBothWhiskersFullyIn() {
+        // Not checking front door position because this is a robot-init method
+
         leftWhisker.setPosition(LEFTWHISKER_STARTPOSITION);
         rightWhisker.setPosition(RIGHTWHISKER_STARTPOSITION);
     }

@@ -23,6 +23,11 @@ public class Bert_TeleOp2 extends OpMode {
         //  1. Gamepad2: go forward slowly when right joystick is moved
         //  2. Gamepad1: Normal two-stick driving
 
+        if (gamepad1.right_bumper)
+            robot.tiltprotectionenabled=false;
+        else
+            robot.tiltprotectionenabled=true;
+        
         if ( gamepad2.right_stick_y < -0.1 ) {
             // go forward slowly
             robot.setDrivePower(0.2);
@@ -43,8 +48,10 @@ public class Bert_TeleOp2 extends OpMode {
 
         if (gamepad2.dpad_up) {
             robot.moveArmUp();
+            robot.closeFrontDoor();
         } else if (gamepad2.dpad_down) {
             robot.moveArmDown();
+            robot.openFrontDoor();
         } else {
             robot.holdArmPosition();
         }
@@ -58,13 +65,15 @@ public class Bert_TeleOp2 extends OpMode {
 
         if (gamepad2.b)
             // Open front door
-            robot.frontDoor.setPower(0.2);
+            robot.openFrontDoor();
         else if (gamepad2.a) {
             // Move whiskers out of the way and Close front door
             robot.moveBothWhiskersFullyOut();
-            robot.frontDoor.setPower(-0.25);
-        } else
-            robot.frontDoor.setPower(0.025);
+            robot.closeFrontDoor();
+        }
+        if (!gamepad2.dpad_down&&!gamepad2.dpad_up&&!gamepad2.a&&!gamepad2.b)
+
+            robot.holdFrontDoor();
 
         // Only turned in one direction
         //robot.setTurntablePower(gamepad2.right_trigger);
