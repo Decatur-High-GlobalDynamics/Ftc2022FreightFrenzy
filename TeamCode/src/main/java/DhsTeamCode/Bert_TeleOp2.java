@@ -28,10 +28,10 @@ public class Bert_TeleOp2 extends OpMode {
         else
             robot.tiltprotectionenabled=true;
 
-        if ( gamepad2.right_stick_y < -0.1 ) {
+        if ( gamepad2.left_stick_y < -0.1 ) {
             // go forward slowly
             robot.setDrivePower(0.2);
-        } else if ( gamepad2.right_stick_y > 0.1 ) {
+        } else if ( gamepad2.left_stick_y > 0.1 ) {
             robot.setDrivePower(-0.2);
         } else {
             // Gamepad joysticks return negative numbers when pushed forward,
@@ -48,13 +48,20 @@ public class Bert_TeleOp2 extends OpMode {
 
         if (gamepad2.dpad_up) {
             robot.moveArmUp();
+            robot.moveBothWhiskersFullyIn();
             //robot.moveBothWhiskersFullyOut();
             //robot.closeFrontDoor();
         } else if (gamepad2.dpad_down) {
             robot.moveArmDown();
             robot.openFrontDoor();
+            robot.moveBothWhiskersFullyOut();
         } else {
             robot.holdArmPosition();
+            if (gamepad2.right_stick_x > 0.1)
+                // right close whiskers
+                robot.moveBothWhiskersFullyIn();
+            else
+                robot.moveBothWhiskersFullyOut();
         }
 
 
@@ -88,15 +95,7 @@ public class Bert_TeleOp2 extends OpMode {
         robot.setTurntablePower(turntablePower);
 
 
-        if (gamepad2.left_stick_x > 0.1 || gamepad2.left_stick_y < -0.1)
-            // DOwn or right close whiskers
-            robot.moveBothWhiskersIn();
-        else
-            robot.moveBothWhiskersOut();
 
-
-        if (gamepad2.left_stick_button)
-            robot.moveBothWhiskersFullyOut();
     }
 
     }

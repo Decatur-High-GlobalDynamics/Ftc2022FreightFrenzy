@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.Func;
 
 public class Bert_Robot {
 
-    public static final double FRONT_DOOR_CLOSE_POWER = 0;// -0.25;
+    public static final double FRONT_DOOR_CLOSE_POWER = -0.25;
     public static final double FRONT_DOOR_OPEN_POWER = 0.2;
     public static final double FRONT_DOOR_HOLD_POWER = 0.1;
 
@@ -449,33 +449,6 @@ public class Bert_Robot {
         turn_table.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
-    public void moveBothWhiskersIn() {
-        // Don't move whiskers if the front door is in the way
-        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
-            return;
-
-        if ( leftWhisker.getPosition() < LEFTWHISKER_MIDPOSITION )
-            leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
-        if ( rightWhisker.getPosition() > RIGHTWHISKER_MIDPOSITION )
-            rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
-
-        leftWhisker.setPosition(Range.clip(leftWhisker.getPosition() - WHISKER_SPEED, LEFTWHISKER_MIDPOSITION, LEFTWHISKER_MAXPOSITION));
-        rightWhisker.setPosition(Range.clip(rightWhisker.getPosition()+ WHISKER_SPEED, RIGHTWHISKER_MAXPOSITION, RIGHTWHISKER_MIDPOSITION));
-    }
-
-    public void moveBothWhiskersOut() {
-        // Don't move whiskers if the front door is in the way
-        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
-            return;
-
-        if ( leftWhisker.getPosition() < LEFTWHISKER_MIDPOSITION )
-            leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
-        if ( rightWhisker.getPosition() > RIGHTWHISKER_MIDPOSITION )
-            rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
-
-        leftWhisker.setPosition(Range.clip(leftWhisker.getPosition() + WHISKER_SPEED, LEFTWHISKER_MIDPOSITION, LEFTWHISKER_MAXPOSITION));
-        rightWhisker.setPosition(Range.clip(rightWhisker.getPosition() - WHISKER_SPEED, RIGHTWHISKER_MAXPOSITION, RIGHTWHISKER_MIDPOSITION));
-    }
 
     public void parkWhiskers() {
         // Don't move whiskers if the front door is in the way
@@ -493,6 +466,15 @@ public class Bert_Robot {
 
         leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
         rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
+    }
+
+    public void moveBothWhiskersFullyIn() {
+        // Don't move whiskers if the front door is in the way
+        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
+            return;
+
+        leftWhisker.setPosition(LEFTWHISKER_MIDPOSITION);
+        rightWhisker.setPosition(RIGHTWHISKER_MIDPOSITION);
     }
     public void resetBothWhiskersFullyIn() {
         // Not checking front door position because this is a robot-init method
