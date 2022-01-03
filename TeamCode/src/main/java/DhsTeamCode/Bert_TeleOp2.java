@@ -27,7 +27,7 @@ public class Bert_TeleOp2 extends OpMode {
             robot.tiltprotectionenabled=false;
         else
             robot.tiltprotectionenabled=true;
-        
+
         if ( gamepad2.right_stick_y < -0.1 ) {
             // go forward slowly
             robot.setDrivePower(0.2);
@@ -48,7 +48,8 @@ public class Bert_TeleOp2 extends OpMode {
 
         if (gamepad2.dpad_up) {
             robot.moveArmUp();
-            robot.closeFrontDoor();
+            //robot.moveBothWhiskersFullyOut();
+            //robot.closeFrontDoor();
         } else if (gamepad2.dpad_down) {
             robot.moveArmDown();
             robot.openFrontDoor();
@@ -68,7 +69,7 @@ public class Bert_TeleOp2 extends OpMode {
             robot.openFrontDoor();
         else if (gamepad2.a) {
             // Move whiskers out of the way and Close front door
-            robot.moveBothWhiskersFullyOut();
+            //robot.moveBothWhiskersFullyOut();
             robot.closeFrontDoor();
         }
         if (!gamepad2.dpad_down&&!gamepad2.dpad_up&&!gamepad2.a&&!gamepad2.b)

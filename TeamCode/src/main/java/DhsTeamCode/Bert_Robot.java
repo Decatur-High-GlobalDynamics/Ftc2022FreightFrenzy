@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.Func;
 
 public class Bert_Robot {
 
-    public static final double FRONT_DOOR_CLOSE_POWER = -0.25;
+    public static final double FRONT_DOOR_CLOSE_POWER = 0;// -0.25;
     public static final double FRONT_DOOR_OPEN_POWER = 0.2;
     public static final double FRONT_DOOR_HOLD_POWER = 0.1;
 
