@@ -22,12 +22,12 @@ public class Bert_Robot {
     public static final double TILT_PANIC_RECOVERY_POWER = 0;
     public boolean tiltprotectionenabled=true;
 
-    public final double TICKS_PER_INCH = 10000/84.75;
+    public final double TICKS_PER_INCH = 3750/42.5;
 
     public final int ARM_BOTTOM_POSITION=0,
                      ARM_LOW_POSITION=1021,
                      ARM_MID_POSITION=1321,
-                     ARM_HIGH_POSITION=1621,
+                     ARM_HIGH_POSITION=1459,
                      ARM_LIMIT_POSITION = 1800;
 
     public final double ARM_DOWN_SPEED_WHEN_RESETTING=-0.10;
@@ -280,7 +280,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition+inches*TICKS_PER_INCH);
-        setDrivePower(0.40);
+        setDrivePower(0.70);
 
         while(leftDrive.getCurrentPosition()<endPosition){
             sleep(10);
@@ -292,7 +292,7 @@ public class Bert_Robot {
         desiredHeading_totalDegreesTurned = heading_totalDegreesTurned;
         int startPosition=leftDrive.getCurrentPosition();
         long endPosition= Math.round(startPosition-inches*TICKS_PER_INCH);
-        setDrivePower(-0.40);
+        setDrivePower(-0.70);
 
         while(leftDrive.getCurrentPosition()>endPosition){
             sleep(10);
@@ -326,6 +326,7 @@ public class Bert_Robot {
 
 
     private void resetArm() {
+        backDoorClose();
         liftMotor.disableLimitChecks();
         liftMotor.setPower(0);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
