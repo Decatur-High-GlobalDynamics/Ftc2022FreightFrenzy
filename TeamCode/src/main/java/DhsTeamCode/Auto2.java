@@ -26,8 +26,10 @@ public class Auto2 extends LinearOpMode {
         robot.setArmPosition(robot.ARM_BOTTOM_POSITION);
         robot.goBackward(11);
         robot.setLeftPower(.80);
+        robot.sleep(1000);
         robot.setRightPower(.60);
         robot.setLeftPower(.65);
+
 
 
 

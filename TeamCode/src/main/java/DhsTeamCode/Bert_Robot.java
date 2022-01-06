@@ -2,6 +2,7 @@ package DhsTeamCode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -22,6 +23,8 @@ public class Bert_Robot {
     public final double MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY = -0.2; // From rough experiments
     public static final double TILT_PANIC_RECOVERY_POWER = 0;
     private final TouchSensor frontTouch;
+    public ColorSensor sensorColor;
+
     public boolean tiltprotectionenabled=true;
 
     public final double TICKS_PER_INCH = 3750/42.5;
@@ -108,6 +111,8 @@ public class Bert_Robot {
         parameters.loggingTag = "IMU";
         imu.initialize(parameters);
         lastImuReading1 = heading_totalDegreesTurned = _getHeadingFromImu();
+        sensorColor = opMode.hardwareMap.get(ColorSensor.class, "revcolor");
+
 
         opMode.telemetry.addData("Robot", "%s",
                 new Func<String>() {
