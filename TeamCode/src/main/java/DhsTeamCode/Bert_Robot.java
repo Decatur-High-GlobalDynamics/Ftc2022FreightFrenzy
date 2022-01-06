@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
@@ -20,6 +21,7 @@ public class Bert_Robot {
     public final double FORWARD_TILT_WARNING_ANGLE=5, FORWARD_TILT_PANIC = 13.0; // From experimenting with robot
     public final double MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY = -0.2; // From rough experiments
     public static final double TILT_PANIC_RECOVERY_POWER = 0;
+    private final TouchSensor frontTouch;
     public boolean tiltprotectionenabled=true;
 
     public final double TICKS_PER_INCH = 3750/42.5;
@@ -95,6 +97,8 @@ public class Bert_Robot {
 
         leftWhisker  = opMode.hardwareMap.servo.get("left_whisker");
         rightWhisker  = opMode.hardwareMap.servo.get("right_whisker");
+
+        frontTouch = opMode.hardwareMap.touchSensor.get("front_touch");
 
         imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -190,6 +194,21 @@ public class Bert_Robot {
                     }
                 });
 
+        opMode.telemetry.addData("Turntable", "%s",
+                new Func<String>() {
+                    @Override
+                    public String value() {
+                        return turn_table.getTelemetryString();
+                    }
+                });
+        opMode.telemetry.addData("Sensors", "%s",
+                new Func<String>() {
+                    @Override
+                    public String value() {
+                        return String.format("FrontTouch: %s" ,
+                                frontTouch.isPressed() ? "PRESSED" : "unpressed");
+                    }
+                });
         resetArm();
         sleep(100);
     }
@@ -441,6 +460,8 @@ public class Bert_Robot {
         liftMotor.loop();
         frontDoor.loop();
         turn_table.loop();
+
+        opMode.telemetry.update();
     }
 
     public void setTurntablePower(double percent) {

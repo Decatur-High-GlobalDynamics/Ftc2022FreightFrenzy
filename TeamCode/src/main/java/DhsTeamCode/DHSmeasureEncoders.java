@@ -3,7 +3,7 @@ package DhsTeamCode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name="DhsmeasureEncoders")
+@Autonomous(name="DhsMeasureEncoders")
 public class DHSmeasureEncoders extends LinearOpMode {
     TeamRobot robot;
 

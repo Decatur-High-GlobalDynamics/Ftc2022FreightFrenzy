@@ -1,9 +1,12 @@
 package DhsTeamCode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name="Dhs2ndAuto", group="Testing")
+@Autonomous(name="Dhs2ndAuto")
+@Disabled
 public class Dhs2ndAuto extends LinearOpMode {
     Bert_Robot robot;
 

@@ -1,12 +1,14 @@
 package DhsTeamCode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.robot.Robot;
 
 @Autonomous(name="DhsFirstAuto")
+@Disabled
 public class DHSFirstAuto extends LinearOpMode {
     TeamRobot robot;
 

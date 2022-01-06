@@ -1,9 +1,10 @@
 package DhsTeamCode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name="Auto2", group="Testing")
+@Autonomous(name="Auto2")
 public class Auto2 extends LinearOpMode {
     Bert_Robot robot;
 
@@ -14,7 +15,7 @@ public class Auto2 extends LinearOpMode {
 
         while (!isStarted()) {
             sleep(100);
-            telemetry.update();
+            robot.loop();
         }
 
         robot.setArmPosition(robot.ARM_HIGH_POSITION);
