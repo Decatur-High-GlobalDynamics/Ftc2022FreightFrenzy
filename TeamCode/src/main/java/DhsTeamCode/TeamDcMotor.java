@@ -10,9 +10,10 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
  * by the Motor between loops
  *
  */
-public class BertDcMotor  {
-    String name;
-    DcMotor motor;
+public class TeamDcMotor {
+    final Robot robot;
+    final String name;
+    final DcMotor motor;
     long previousReadingTime_ms;
     int previousPosition;
     int currentPosition;
@@ -21,13 +22,16 @@ public class BertDcMotor  {
     private Integer minPositionSeen, maxPositionSeen;
     private boolean limitsEnabled=false;
 
-    public BertDcMotor(OpMode opMode, String name) {
-        this(name, opMode.hardwareMap.dcMotor.get(name));
+    private Long targetChangeTime_ms;
+
+    public TeamDcMotor(Robot robot, OpMode opMode, String name) {
+        this(robot, name, opMode.hardwareMap.dcMotor.get(name));
     }
 
-    public BertDcMotor(String name, DcMotor motor) {
+    public TeamDcMotor(Robot robot, String name, DcMotor motor) {
+        this.robot = robot;
         this.name = name;
-        this.motor =motor;
+        this.motor = motor;
         previousReadingTime_ms = System.currentTimeMillis();
         previousPosition = currentPosition = this.motor.getCurrentPosition();
 
@@ -66,7 +70,7 @@ public class BertDcMotor  {
         switch (motor.getMode()) {
             case RUN_TO_POSITION:
                 if ( isBusy() )
-                    return String.format("Busy %d-->%d (%5.2f) (%d/s)",
+                    return String.format("Busy %d-->%d (p%5.2f) (%d/s)",
                             currentPosition, motor.getTargetPosition(), motor.getPower(), speed_perSec);
                 else
                     return String.format("Hold %5.2f hold@%d (%d/s)",
@@ -126,6 +130,7 @@ public class BertDcMotor  {
      * @see #isBusy()
      */
     public void setTargetPosition(int position) {
+        targetChangeTime_ms = System.currentTimeMillis();
         motor.setTargetPosition(position);
     }
 
@@ -144,7 +149,19 @@ public class BertDcMotor  {
      * @see #setTargetPosition(int)
      */
     public boolean isBusy() {
-        return motor.isBusy();
+        if ( getMode() != DcMotor.RunMode.RUN_TO_POSITION )
+            return false;
+
+        if ( targetChangeTime_ms == null )
+            return motor.isBusy();
+
+        long timeSinceTargetChange_ms = System.currentTimeMillis() - targetChangeTime_ms;
+
+        // Consider the motor unbusy if it isn't moving
+        if ( timeSinceTargetChange_ms>1000 && Math.abs(speed_perSec) < 500 )
+            return false;
+        else
+            return motor.isBusy();
     }
 
     /**
@@ -167,6 +184,9 @@ public class BertDcMotor  {
      */
     public void setMode(DcMotor.RunMode mode) {
         motor.setMode(mode);
+
+        if ( mode != DcMotor.RunMode.RUN_TO_POSITION )
+            targetChangeTime_ms = null;
 
         // If the encoder is being reset, then note that the min/max positions have changed
         if ( mode == DcMotor.RunMode.STOP_AND_RESET_ENCODER ) {
@@ -242,5 +262,10 @@ public class BertDcMotor  {
 
     public void enableLimitChecks() {
         limitsEnabled=true;
+    }
+
+    public void waitForMotorToReachTarget() throws InterruptedException {
+        while ( isBusy() )
+            robot.sleep(5);
     }
 }

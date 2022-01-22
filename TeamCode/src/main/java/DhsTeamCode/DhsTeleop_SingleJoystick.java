@@ -1,25 +1,11 @@
 package DhsTeamCode;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.opencv.core.Mat;
-
 @TeleOp(name="DhsSingleJoystick", group="Testing")
-public class DhsTeleop_SingleJoystick extends OpMode {
-    Bert_Robot robot;
-
+public class DhsTeleop_SingleJoystick extends TeamOpMode {
     @Override
-    public void init() {
-        robot = new Bert_Robot(this);
-        robot.updateStatus("initialized");
-    }
-
-    @Override
-    public void loop() {
-        robot.noteThatOpModeStarted();
-        robot.updateStatus("looping");
-
+    public void teamLoop() {
         // Gamepad joysticks return negative numbers when pushed forward,
         // so we invert them here so forward makes the robot go forward
 
@@ -79,31 +65,19 @@ public class DhsTeleop_SingleJoystick extends OpMode {
         }
 
 
-        if ( gamepad2.dpad_up ) {
-            robot.moveArmUp();
-        }
-        else if ( gamepad2.dpad_down ) {
-            robot.moveArmDown();
-        }
-        else {
-            robot.holdArmPosition();
+        if (gamepad2.dpad_up) {
+            robot.moveArm_presetUp();
+        } else if (gamepad2.dpad_down) {
+            robot.moveArm_presetDown();
+        } else if ( gamepad2.dpad_right) {
+            robot.moveArm_up();
+        } else if ( gamepad2.dpad_left ) {
+            robot.moveArm_down();
+        } else {
+            robot.holdArmAtPosition();
         }
 
-
-        // Open back door when left bumper is pressed
-        if (gamepad2.left_trigger > 0.1)
-            robot.backDoorOpen();
-        else
-            robot.backDoorClose();
-
-        if (gamepad2.b)
-            // Open front door
-            robot.frontDoor.setPower(0.1);
-        else if (gamepad2.a)
-            // Close front door
-            robot.frontDoor.setPower(-0.25);
-        else
-            robot.frontDoor.setPower(0);
+        robot.grabber_setPosition(gamepad2.right_stick_x);
 
         // Only turned in one direction
         //robot.setTurntablePower(gamepad2.right_trigger);

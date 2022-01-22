@@ -7,20 +7,11 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.robot.Robot;
 
-@Autonomous(name="DhsFirstAuto")
+@Autonomous(name="DhsFirstAuto-Fwd&Back")
 @Disabled
-public class DHSFirstAuto extends LinearOpMode {
-    TeamRobot robot;
-
+public class DHSFirstAuto extends TeamOpMode {
     @Override
-    public void runOpMode() throws InterruptedException {
-        robot = new TeamRobot(this);
-
-        while ( !isStarted() ) {
-            sleep(100);
-            telemetry.update();
-        }
-
+    public void teamRunOpMode() throws InterruptedException {
         robot.setLeftPower(0.5);
         robot.setRightPower(0.5);
 
@@ -29,7 +20,7 @@ public class DHSFirstAuto extends LinearOpMode {
         robot.setLeftPower(-0.5);
         robot.setRightPower(-0.5);
 
-        Thread.sleep(10000);
+        robot.sleep(10000);
 
     }
 }

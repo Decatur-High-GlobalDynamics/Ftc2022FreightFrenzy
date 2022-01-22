@@ -6,16 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name="DhsFirstTeleOpX")
 @Disabled
-public class DhsFirstTeleOp extends OpMode {
-    TeamRobot robot;
-
+public class DhsFirstTeleOp extends TeamOpMode {
     @Override
-    public void init() {
-        robot = new TeamRobot(this);
-    }
-
-    @Override
-    public void loop() {
+    public void teamLoop() {
         // The joysticks report negative values when pressed forward
         // and since we want forward on the joysticks to make the robot
         // go forward, we invert the +/- of the sticks

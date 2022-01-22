@@ -4,18 +4,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 @Autonomous(name="DhsMeasureEncoders")
-public class DHSmeasureEncoders extends LinearOpMode {
-    TeamRobot robot;
-
+public class DHSmeasureEncoders extends TeamOpMode {
     @Override
-    public void runOpMode() throws InterruptedException {
-        robot = new TeamRobot(this);
-
-        while ( !isStarted() ) {
-            sleep(100);
-            telemetry.update();
-        }
-
+    public void teamRunOpMode() throws InterruptedException {
         int startPosition=robot.rightDrive.getCurrentPosition();
         int endPosition= startPosition+5000;
         robot.setLeftPower(0.3);

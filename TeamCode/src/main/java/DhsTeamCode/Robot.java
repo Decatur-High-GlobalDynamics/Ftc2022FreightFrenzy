@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
@@ -12,11 +13,9 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 
-public class Bert_Robot {
+import androidx.annotation.NonNull;
 
-    public static final double FRONT_DOOR_CLOSE_POWER = -0.25;
-    public static final double FRONT_DOOR_OPEN_POWER = 0.2;
-    public static final double FRONT_DOOR_HOLD_POWER = 0.1;
+public class Robot {
 
     // Safety values to keep robot from falling over
     public final double FORWARD_TILT_WARNING_ANGLE=5, FORWARD_TILT_PANIC = 13.0; // From experimenting with robot
@@ -24,49 +23,90 @@ public class Bert_Robot {
     public static final double TILT_PANIC_RECOVERY_POWER = 0;
     private final TouchSensor frontTouch;
     public ColorSensor sensorColor;
+    private final TouchSensor armTouch;
+
+    // Sensor on tips of grabbers that indicate if grabbers are touching with opposite logic:
+    //    TRUE: NOT Touching
+    //    FALSE: Touching
+    private final DigitalChannel grabberTouchSensor;
 
     public boolean tiltprotectionenabled=true;
 
     public final double TICKS_PER_INCH = 3750/42.5;
+    private Long grabTime_ms = null;
 
-    public final int ARM_BOTTOM_POSITION=0,
-                     ARM_LOW_POSITION=1021,
-                     ARM_MID_POSITION=1321,
-                     ARM_HIGH_POSITION=1459,
-                     ARM_LIMIT_POSITION = 1800;
+    public enum ARM_PRESET {
+        TOP(200),
+        HIGH(-1035),
+        MID(-1760),
+        GRAB(-2450),
+        LOWER_LIMIT(GRAB.motorPosition-200),
+        DOWN(-2962);
 
-    public final double ARM_DOWN_SPEED_WHEN_RESETTING=-0.10;
-    public final double ARM_LIFT_SPEED = 0.30;
-    public final double ARM_DOWN_SPEED = -0.20;
-    public final Servo leftWhisker;
-    public final Servo rightWhisker;
+        final int motorPosition;
 
-    // Where does the front door get out of the way of the whiskers
-    // This was found through experimentation
-    public final int FRONT_DOOR_POSITION_ABOVE_WHISKERS = 150;
+        ARM_PRESET(int motorPosition) {
+            this.motorPosition = motorPosition;
+        }
 
-    public final double LEFTWHISKER_STARTPOSITION=0;
-    public final double RIGHTWHISKER_STARTPOSITION=1.0;
-    public final double RIGHTWHISKER_MAXPOSITION=.2;
-    public final double LEFTWHISKER_MAXPOSITION=.6;
-    public final double LEFTWHISKER_MIDPOSITION=.3;
-    public final double RIGHTWHISKER_MIDPOSITION=.5;
 
-    public final double WHISKER_SPEED =0.15;
+        ARM_PRESET getNextPreset_below() {
+            // Are we at the bottom already?
+            if ( this == DOWN )
+                return DOWN;
 
-    OpMode opMode;
-    BertDcMotor leftDrive, rightDrive;
-    BertDcMotor liftMotor, frontDoor;
-    Servo backDoor;
-    BertDcMotor turn_table;
+            return ARM_PRESET.values()[ordinal() +1];
+        }
+        ARM_PRESET getNextPreset_above() {
+            // Are we at the top already?... If so, we'll move the arm straight up
+            if ( this == TOP )
+                return TOP;
+            return ARM_PRESET.values()[ordinal() -1];
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return String.format("%s#%d", name().toLowerCase(), ordinal());
+        }
+    }
+
+    private ARM_PRESET currentArmPreset =null;
+
+    public final double ARM_UP_SPEED_WHEN_RESETTING=0.20;
+    public final double ARM_SPEED_SET_POSITION=0.25, ARM_SPEED_UP=0.20, ARM_SPEED_DOWN=0.10;
+    public final double ARM_HOLD_POWER=0.5;
+    private boolean currentlyHoldingArmPosition=false;
+
+    public final Servo rightGrabber;
+    public final Servo leftGrabber;
+
+    // This is a ColorSensor that we just use a bright LED to indicate if a block has been grabbed
+    ColorSensor grabIndicator;
+
+    // Start the grabber folded back
+    public final double LEFTGRABBER_POSITION_PARKED =1.0;
+    public final double RIGHTGRABBER_POSITION_PARKED =0.0;
+
+    // Grabbers are straight sideways
+    public final double LEFTGRABBER_POSITION_SIDEWAYS  =0.5;
+    public final double RIGHTGRABBER_POSITION_SIDEWAYS =0.5;
+
+    // Grabbers are holding a block
+    public final double LEFTGRABBER_POSITION_GRAB =0.05;
+    public final double RIGHTGRABBER_POSITION_GRAB=0.95;
+
+    TeamOpMode opMode;
+    TeamDcMotor leftDrive, rightDrive;
+    TeamDcMotor armLiftMotor;
+    TeamDcMotor turn_table;
 
     // Is Arm in front?
     //   The left/right motors are defined by arm being in front
     //   but this boolean switches this.
     boolean armIsInFrontOfRobot=true;
 
-    long lastLoopTime_ms = System.currentTimeMillis();
-    long durationOfLastLoop_ms = 1;
+    long lastLoopStartTime_ms = System.currentTimeMillis();
 
     // Gyro variables
     float heading_totalDegreesTurned, desiredHeading_totalDegreesTurned;
@@ -78,30 +118,30 @@ public class Bert_Robot {
     String status="";
     long statusChangedTime_ms = System.currentTimeMillis();
 
-    public Bert_Robot(OpMode _opMode) {
+    public Robot(TeamOpMode _opMode) throws InterruptedException {
         opMode = _opMode;
-        rightDrive= new BertDcMotor(opMode, "right_drive");
+        updateStatus("initializing");
+
+        rightDrive= new TeamDcMotor(this, opMode, "right_drive");
         rightDrive.motor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        leftDrive=new BertDcMotor(opMode, "left_drive");
+        leftDrive=new TeamDcMotor(this, opMode, "left_drive");
 
-        liftMotor=new BertDcMotor(opMode, "cage_lift");
-        liftMotor.setMinimumSafetyPosition(0);
-        liftMotor.setMaximumSafetyPosition(ARM_LIMIT_POSITION);
+        armLiftMotor =new TeamDcMotor(this, opMode, "cage_lift");
+        armLiftMotor.setMaximumSafetyPosition(ARM_PRESET.TOP.motorPosition);
+        armLiftMotor.setMinimumSafetyPosition(ARM_PRESET.DOWN.motorPosition);
 
-        turn_table=new BertDcMotor(opMode, "turn_table");
+        turn_table=new TeamDcMotor(this, opMode, "turn_table");
         turn_table.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        frontDoor=new BertDcMotor(opMode, "front_door");
-        frontDoor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontDoor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        backDoor  = opMode.hardwareMap.servo.get("back_door");
-
-        leftWhisker  = opMode.hardwareMap.servo.get("left_whisker");
-        rightWhisker  = opMode.hardwareMap.servo.get("right_whisker");
+        rightGrabber = opMode.hardwareMap.servo.get("left_grabber");
+        leftGrabber = opMode.hardwareMap.servo.get("right_grabber");
 
         frontTouch = opMode.hardwareMap.touchSensor.get("front_touch");
+        armTouch = opMode.hardwareMap.touchSensor.get("arm touch");
+
+        grabberTouchSensor = opMode.hardwareMap.digitalChannel.get("digital2");
+        grabberTouchSensor.setMode(DigitalChannel.Mode.INPUT);
 
         imu = opMode.hardwareMap.get(BNO055IMU.class, "imu");
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -114,15 +154,19 @@ public class Bert_Robot {
         sensorColor = opMode.hardwareMap.get(ColorSensor.class, "revcolor");
 
 
-        opMode.telemetry.addData("Robot", "%s",
+        // Color sensors have really bright LEDs, so we're using one to indicate if a block is being held
+        grabIndicator = opMode.hardwareMap.get(ColorSensor.class, "grab indicator");
+        grabIndicator.enableLed(false);
+
+        opMode.telemetry.addData("R", "%s",
                 new Func<String>() {
                     @Override
                     public String value() {
                         long now_ms = System.currentTimeMillis();
-                        return String.format("t_init=%3ds t_run=%3ds %d loops/sec|%s (%3ds)",
+                        return String.format("t_init=%3ds t_run=%3ds %4d loops/s|%s (%3ds)",
                                 (now_ms - initializedTime_ms)/1000,
                                 opModeStarted_ms==-1 ? -1 : (now_ms-opModeStarted_ms)/1000,
-                                durationOfLastLoop_ms == 0 ? 0 : 1000/durationOfLastLoop_ms,
+                                opMode.durationOfLastLoop_ms == 0 ? 1000 : 1000/opMode.durationOfLastLoop_ms,
                                 status, (now_ms - statusChangedTime_ms)/1000);
                     }
                 });
@@ -181,24 +225,24 @@ public class Bert_Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("Lift: %s | F: %s |  B: %.2f",
-                                liftMotor.getTelemetryString(),
-                                frontDoor.getTelemetryString(),
-                                backDoor.getPosition());
+                        return String.format("LiftMotor: %s [%s]%s",
+                                armLiftMotor.getTelemetryString(), currentArmPreset,
+                                armTouch.isPressed() ? " LIMIT" : "");
                     }
                 });
-        opMode.telemetry.addData("Whiskers", "%s",
+
+        opMode.telemetry.addData("Grab", "%s",
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("Left: %.2f | Right: %.2f" ,
-                                leftWhisker.getPosition(),
-                                rightWhisker.getPosition());
-
-
+                        return String.format("L/R: %.2f / %.2f | dur_s: %.1f | Blk: %s | Touch: %s",
+                                leftGrabber.getPosition(),
+                                rightGrabber.getPosition(),
+                                grabTime_ms==null ? -1 : 1.0*(System.currentTimeMillis()-grabTime_ms)/1000,
+                                blockIsProbablyGrabbed() ? "YES" : "no",
+                                grabbersAreTouchingEachOther() ? "yes" : "no");
                     }
                 });
-
         opMode.telemetry.addData("Turntable", "%s",
                 new Func<String>() {
                     @Override
@@ -210,12 +254,15 @@ public class Bert_Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("FrontTouch: %s" ,
-                                frontTouch.isPressed() ? "PRESSED" : "unpressed");
+                        return String.format("Front: %s | Color: %3d/%3d/%3d" ,
+                                frontTouch.isPressed() ? "PRESSED" : "unpressed",
+                                grabIndicator.red(), grabIndicator.green(), grabIndicator.blue());
                     }
                 });
         resetArm();
         sleep(100);
+        updateStatus("initialized");
+
     }
 
     private float _getHeadingFromImu() {
@@ -269,9 +316,8 @@ public class Bert_Robot {
         setRightPower(power);
     }
 
-    public void noteThatOpModeStarted() {
-        if ( opModeStarted_ms == -1 )
-            opModeStarted_ms = System.currentTimeMillis();
+    public void noteThatOpModeStarted() throws InterruptedException {
+        opModeStarted_ms = System.currentTimeMillis();
     }
 
     // Describe what the robot is doing
@@ -281,20 +327,15 @@ public class Bert_Robot {
             status = newStatus;
             statusChangedTime_ms = System.currentTimeMillis();
         }
-        loop();
     }
 
-    public void sleep(long mSec) {
+    public void sleep(long mSec) throws InterruptedException {
         long start = System.currentTimeMillis();
         long end   = start + mSec;
 
-        while ( System.currentTimeMillis() <= end ) {
+        while ( opMode.opModeIsActive() && System.currentTimeMillis() <= end ) {
             loop();
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted");
-            }
+            Thread.sleep(5);
         }
         // Make sure we do at least one loop
         loop();
@@ -349,101 +390,119 @@ public class Bert_Robot {
 
 
 
-    private void resetArm() {
-        backDoorClose();
-        liftMotor.disableLimitChecks();
-        liftMotor.setPower(0);
-        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        liftMotor.setPower(ARM_DOWN_SPEED_WHEN_RESETTING);
-        // let the arm get moving
-        sleep(100);
-
-        // When to consider the arm-lift motor to have stopped
-        final int stoppedThreshold = 25;
-        while ( liftMotor.speed_perSec > stoppedThreshold ) {
-            sleep(100);
+    private void resetArm() throws InterruptedException {
+        armLiftMotor.disableLimitChecks();
+        setArmPower(ARM_UP_SPEED_WHEN_RESETTING);
+        // Wait for arm to reach upper limit sensor
+        while ( !armTouch.isPressed() ) {
+            sleep(10);
         }
 
-        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        holdArmPosition();
-        liftMotor.enableLimitChecks();
+        // Stop and let arm stabilize
+        holdArmAtPosition();
+        sleep(500);
+        currentArmPreset = ARM_PRESET.TOP;
 
-        // Reset the arm whiskers, but first move the front door out of the way
-        openFrontDoor();
+        // Reset encoder so it's 0 at rest on the limit switch
+        armLiftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armLiftMotor.enableLimitChecks();
+
+        // Give team a moment to get block into jaws
+        sleep(2000);
+
+        // Set the grabbers to hold block
+        grabbers_grab();
+        // Trying a second grabbers_grab because the one of the grabbers sometimes doesn't engage!
         sleep(1000);
-        resetBothWhiskersFullyIn();
-        closeFrontDoor();
-        // Wait until it's closed
-        while ( Math.abs(frontDoor.speed_perSec) > stoppedThreshold )
-            sleep(100);
-        holdFrontDoor();
+        grabbers_grab();
     }
 
 
-    public void setArmPosition(int position) {
-        if ( position < liftMotor.getCurrentPosition() )
-            liftMotor.setPower(0.3);
-        else
-            liftMotor.setPower(0.5);
-        liftMotor.setTargetPosition(position);
-        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    public void setArmPosition(ARM_PRESET armPosition) {
+        currentArmPreset = armPosition;
+        setArmPosition(true, armPosition.motorPosition);
     }
 
-    public void holdArmPosition() {
-        if (liftMotor.getMode() != DcMotor.RunMode.RUN_TO_POSITION)
-            setArmPosition(liftMotor.getCurrentPosition());
+    private void setArmPosition(boolean basedOnPresetPosition, int position) {
+        // If this isn't based on an ARM_POSITION, then we're no longer at a position
+        if ( !basedOnPresetPosition )
+            currentArmPreset = null;
+
+        currentlyHoldingArmPosition=false;
+        armLiftMotor.setTargetPosition(position);
+        armLiftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armLiftMotor.setPower(ARM_SPEED_SET_POSITION);
+    }
+
+    public void holdArmAtPosition() {
+        // Relax motor if armTouch is pressed, otherwise hold at current position
+        if ( armTouch.isPressed() ) {
+            currentlyHoldingArmPosition = true;
+            armLiftMotor.setPower(0);
+            return;
+        }
+
+        // only set the target position once, otherwise wiggles become the new set points
+        if ( !currentlyHoldingArmPosition  ) {
+            currentlyHoldingArmPosition = true;
+
+            // We're going to wait to reach our target position if we're on our way there
+            if ( !armLiftMotor.isBusy() ) {
+                armLiftMotor.setTargetPosition(armLiftMotor.getCurrentPosition());
+                armLiftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                armLiftMotor.setPower(ARM_HOLD_POWER);
+            }
+        }
     }
 
 
     private void setArmPower(double power) {
-        if ( power == 0 ) {
-            holdArmPosition();
+        if ( power==0 ) {
+            holdArmAtPosition();
+        } else {
+            currentArmPreset =null;
+            currentlyHoldingArmPosition=false;
+            armLiftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            armLiftMotor.setPower(power);
+        }
+    }
+
+    public void moveArm_presetUp() {
+        if ( currentArmPreset == null )
+            setArmPosition(ARM_PRESET.HIGH);
+        else if ( !armLiftMotor.isBusy() )
+            // move to the next position only if the motor has reached its preset goal
+            setArmPosition(currentArmPreset.getNextPreset_above());
+    }
+
+    public void moveArm_presetDown() {
+        if ( currentArmPreset == null )
+            setArmPosition(ARM_PRESET.GRAB);
+        else if ( !armLiftMotor.isBusy() )
+            // move to the next position only if the motor has reached its preset goal
+            setArmPosition(currentArmPreset.getNextPreset_below());
+    }
+
+    public void moveArm_up() {
+        // Ignore requests to move arm passed limit switch
+        if ( armTouch.isPressed() ) {
             return;
         }
 
-        if (liftMotor.getMode() != DcMotor.RunMode.RUN_WITHOUT_ENCODER)
-            liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        liftMotor.setPower(power);
+        setArmPower(+ARM_SPEED_UP);
     }
 
-    public void moveArmUp() {
-        setArmPower(ARM_LIFT_SPEED);
-    }
-
-    public void moveArmDown() {
-        if ( liftMotor.getCurrentPosition()<500 )
-            setArmPower(ARM_DOWN_SPEED_WHEN_RESETTING);
-        else if (liftMotor.getCurrentPosition() < 1000 )
-            setArmPower( (ARM_DOWN_SPEED_WHEN_RESETTING+ARM_DOWN_SPEED)/2);
+    public void moveArm_down() {
+        // Turn off motor below the lower limit
+        if ( armLiftMotor.getCurrentPosition() < ARM_PRESET.LOWER_LIMIT.motorPosition )
+            setArmPower(0);
         else
-            setArmPower(ARM_DOWN_SPEED);
-    }
-
-    public void backDoorClose() {
-        backDoor.setPosition(0.3);
-    }
-
-    public void backDoorOpen() {
-        backDoor.setPosition(0);
-    }
-
-    public void openFrontDoor() {
-        frontDoor.setPower(FRONT_DOOR_OPEN_POWER);
-    }
-
-    public void closeFrontDoor() {
-        frontDoor.setPower(FRONT_DOOR_CLOSE_POWER);
-    }
-
-    public void holdFrontDoor() {
-        frontDoor.setPower(0);
+            setArmPower(-ARM_SPEED_DOWN);
     }
 
     public void loop() {
         long now_ms = System.currentTimeMillis();
-        durationOfLastLoop_ms = now_ms - lastLoopTime_ms;
-        lastLoopTime_ms = now_ms;
+        lastLoopStartTime_ms = now_ms;
 
         // Update heading
         float imuReading = _getHeadingFromImu();
@@ -460,11 +519,19 @@ public class Bert_Robot {
 
         heading_totalDegreesTurned += degreesTurned;
 
+        // Protect against arm moving past limit switch
+        if ( armTouch.isPressed() && armLiftMotor.speed_perSec>0 )
+            setArmPower(0);
+
+        if (  armNeedsGrabbersRetracted() )
+            grabbers_park();
+
         leftDrive.loop();
         rightDrive.loop();
-        liftMotor.loop();
-        frontDoor.loop();
+        armLiftMotor.loop();
         turn_table.loop();
+
+        grabIndicator.enableLed(blockIsProbablyGrabbed());
 
         opMode.telemetry.update();
     }
@@ -476,38 +543,70 @@ public class Bert_Robot {
         turn_table.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
+    /**
+     * Sets the position of the grabber. 1 is fully out, 0 is fully in/grabbing.
+     * @param position
+     */
+    public void grabber_setPosition(double position) {
+        // Make sure position is positive
+        position=Math.abs(position);
+        rightGrabber.setPosition(Range.clip(1-position, 0,1));
+        leftGrabber.setPosition(Range.clip(position, 0, 1));
 
-    public void parkWhiskers() {
-        // Don't move whiskers if the front door is in the way
-        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
-            return;
-
-        leftWhisker.setPosition(LEFTWHISKER_STARTPOSITION);
-        rightWhisker.setPosition(RIGHTWHISKER_STARTPOSITION);
+        if ( position<0.1 )
+            grabTime_ms = System.currentTimeMillis();
+        else
+            grabTime_ms = null;
     }
 
-    public void moveBothWhiskersFullyOut() {
-        // Don't move whiskers if the front door is in the way
-        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
-            return;
-
-        leftWhisker.setPosition(LEFTWHISKER_MAXPOSITION);
-        rightWhisker.setPosition(RIGHTWHISKER_MAXPOSITION);
+    public void grabbers_park() {
+        grabTime_ms = null;
+        leftGrabber.setPosition(LEFTGRABBER_POSITION_PARKED);
+        rightGrabber.setPosition(RIGHTGRABBER_POSITION_PARKED);
     }
 
-    public void moveBothWhiskersFullyIn() {
-        // Don't move whiskers if the front door is in the way
-        if ( frontDoor.getMotorPositionAboveMinimumSeen() <  FRONT_DOOR_POSITION_ABOVE_WHISKERS )
+    public void grabbers_release() {
+        if ( armNeedsGrabbersRetracted() )
             return;
 
-        leftWhisker.setPosition(LEFTWHISKER_MIDPOSITION);
-        rightWhisker.setPosition(RIGHTWHISKER_MIDPOSITION);
+        grabTime_ms = null;
+        leftGrabber.setPosition(RIGHTGRABBER_POSITION_SIDEWAYS);
+        rightGrabber.setPosition(LEFTGRABBER_POSITION_SIDEWAYS);
     }
-    public void resetBothWhiskersFullyIn() {
-        // Not checking front door position because this is a robot-init method
 
-        leftWhisker.setPosition(LEFTWHISKER_STARTPOSITION);
-        rightWhisker.setPosition(RIGHTWHISKER_STARTPOSITION);
+    public void grabbers_grab() {
+        if ( armNeedsGrabbersRetracted() )
+            return;
+
+        leftGrabber.setPosition(LEFTGRABBER_POSITION_GRAB);
+        rightGrabber.setPosition(RIGHTGRABBER_POSITION_GRAB);
+        if ( grabTime_ms == null )
+            grabTime_ms = System.currentTimeMillis();
+    }
+
+    private boolean armNeedsGrabbersRetracted() {
+        return armLiftMotor.getCurrentPosition() < ARM_PRESET.LOWER_LIMIT.motorPosition;
+    }
+
+    public boolean blockIsProbablyGrabbed() {
+        // This will be null when we're not trying to grab
+        if ( grabTime_ms==null )
+            return false;
+
+        // See how long since we grabbed... this way we know if the grabbers should have closed
+        // If they're still open after this close duration, then there is probably a block there
+        long grabDurationTime_ms = System.currentTimeMillis()-grabTime_ms;
+
+        // Estimating that it takes 1/2 second to fully close
+        if ( grabDurationTime_ms < 500 )
+            return false;
+
+        return !grabbersAreTouchingEachOther();
+    }
+
+    public boolean grabbersAreTouchingEachOther() {
+        // The grabber touch sensor returns opposite logic
+        return grabberTouchSensor.getState() == false;
     }
 }
 
