@@ -1,8 +1,6 @@
 package DhsTeamCode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -22,7 +20,6 @@ public class Robot {
     public final double MAX_BACKWARD_POWER_WHEN_TILTED_SLIGHTLY = -0.2; // From rough experiments
     public static final double TILT_PANIC_RECOVERY_POWER = 0;
     private final TouchSensor frontTouch;
-    public ColorSensor sensorColor;
     private final TouchSensor armTouch;
 
     // Sensor on tips of grabbers that indicate if grabbers are touching with opposite logic:
@@ -37,11 +34,10 @@ public class Robot {
 
     public enum ARM_PRESET {
         TOP(200),
-        HIGH(-1035),
-        MID(-1760),
-        GRAB(-2450),
-        LOWER_LIMIT(GRAB.motorPosition-200),
-        DOWN(-2962);
+        HIGH(-1400),
+        MID(-1800),
+        GRAB(-2495),
+        LOWER_LIMIT(GRAB.motorPosition-100);
 
         final int motorPosition;
 
@@ -52,8 +48,8 @@ public class Robot {
 
         ARM_PRESET getNextPreset_below() {
             // Are we at the bottom already?
-            if ( this == DOWN )
-                return DOWN;
+            if ( this == LOWER_LIMIT )
+                return LOWER_LIMIT;
 
             return ARM_PRESET.values()[ordinal() +1];
         }
@@ -80,9 +76,6 @@ public class Robot {
 
     public final Servo rightGrabber;
     public final Servo leftGrabber;
-
-    // This is a ColorSensor that we just use a bright LED to indicate if a block has been grabbed
-    ColorSensor grabIndicator;
 
     // Start the grabber folded back
     public final double LEFTGRABBER_POSITION_PARKED =1.0;
@@ -129,7 +122,7 @@ public class Robot {
 
         armLiftMotor =new TeamDcMotor(this, opMode, "cage_lift");
         armLiftMotor.setMaximumSafetyPosition(ARM_PRESET.TOP.motorPosition);
-        armLiftMotor.setMinimumSafetyPosition(ARM_PRESET.DOWN.motorPosition);
+        armLiftMotor.setMinimumSafetyPosition(ARM_PRESET.LOWER_LIMIT.motorPosition);
 
         turn_table=new TeamDcMotor(this, opMode, "turn_table");
         turn_table.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -151,12 +144,6 @@ public class Robot {
         parameters.loggingTag = "IMU";
         imu.initialize(parameters);
         lastImuReading1 = heading_totalDegreesTurned = _getHeadingFromImu();
-        sensorColor = opMode.hardwareMap.get(ColorSensor.class, "revcolor");
-
-
-        // Color sensors have really bright LEDs, so we're using one to indicate if a block is being held
-        grabIndicator = opMode.hardwareMap.get(ColorSensor.class, "grab indicator");
-        grabIndicator.enableLed(false);
 
         opMode.telemetry.addData("R", "%s",
                 new Func<String>() {
@@ -254,9 +241,8 @@ public class Robot {
                 new Func<String>() {
                     @Override
                     public String value() {
-                        return String.format("Front: %s | Color: %3d/%3d/%3d" ,
-                                frontTouch.isPressed() ? "PRESSED" : "unpressed",
-                                grabIndicator.red(), grabIndicator.green(), grabIndicator.blue());
+                        return String.format("Front: %s" ,
+                                frontTouch.isPressed() ? "PRESSED" : "unpressed");
                     }
                 });
         resetArm();
@@ -347,7 +333,7 @@ public class Robot {
         long endPosition= Math.round(startPosition+inches*TICKS_PER_INCH);
         setDrivePower(0.70);
 
-        while(leftDrive.getCurrentPosition()<endPosition){
+        while(leftDrive.getCurrentPosition()<endPosition && !opMode.isStopRequested()){
             sleep(10);
         }
         setDrivePower(0);
@@ -359,7 +345,7 @@ public class Robot {
         long endPosition= Math.round(startPosition-inches*TICKS_PER_INCH);
         setDrivePower(-0.70);
 
-        while(leftDrive.getCurrentPosition()>endPosition){
+        while(leftDrive.getCurrentPosition()>endPosition && !opMode.isStopRequested()){
             sleep(10);
         }
         setDrivePower(0);
@@ -370,7 +356,7 @@ public class Robot {
         double endHeading= startHeading-degrees;
         setLeftPower(-0.30);setRightPower(0.30);
 
-        while(heading_totalDegreesTurned>endHeading){
+        while(heading_totalDegreesTurned>endHeading && !opMode.isStopRequested()){
             sleep(10);
         }
         setDrivePower(0);
@@ -381,7 +367,7 @@ public class Robot {
         double endHeading= startHeading+degrees;
         setLeftPower(0.30);setRightPower(-0.30);
 
-        while(heading_totalDegreesTurned<endHeading){
+        while(heading_totalDegreesTurned<endHeading && !opMode.isStopRequested()){
             sleep(10);
         }
         setDrivePower(0);
@@ -394,7 +380,7 @@ public class Robot {
         armLiftMotor.disableLimitChecks();
         setArmPower(ARM_UP_SPEED_WHEN_RESETTING);
         // Wait for arm to reach upper limit sensor
-        while ( !armTouch.isPressed() ) {
+        while ( !armTouch.isPressed() && !opMode.isStopRequested()) {
             sleep(10);
         }
 
@@ -530,8 +516,6 @@ public class Robot {
         rightDrive.loop();
         armLiftMotor.loop();
         turn_table.loop();
-
-        grabIndicator.enableLed(blockIsProbablyGrabbed());
 
         opMode.telemetry.update();
     }
