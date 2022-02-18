@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
-<Robot type="FirstInspires-FTC" name="Robot3543_2022">
+<Robot type="FirstInspires-FTC" name="Robot3543A_2022">
     <LynxUsbDevice name="Control Hub Portal" serialNumber="(embedded)" parentModuleAddress="173">
         <LynxModule name="Control Hub" port="173">
             <goBILDA5202SeriesMotor name="rbWheel" port="0" />
@@ -39,7 +39,7 @@ SOFTWARE.
             <goBILDA5202SeriesMotor name="lbWheel" port="3" />
             <Servo name="yLeftOdwServo" port="0" />
             <Servo name="pickupHookServo" port="1" />
-            <RevColorSensorV3 name="intake.sensor" port="0" bus="1"/>
+<!--            <RevColorSensorV3 name="intake.sensor" port="0" bus="1"/>-->
             <RevBlinkinLedDriver name="blinkin" port="5" />
 <!--            <LynxEmbeddedIMU name="imu 1" port="0" bus="0" />-->
         </LynxModule>
