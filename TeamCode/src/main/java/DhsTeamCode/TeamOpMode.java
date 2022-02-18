@@ -38,7 +38,6 @@ public abstract class TeamOpMode extends LinearOpMode {
         robot.updateStatus("Waiting for start");
         while (!isStarted() && !isStopRequested()) {
             sleep(1);
-            robot.grabbers_grab();
             robot.loop();
         }
 

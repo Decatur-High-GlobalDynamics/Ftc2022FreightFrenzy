@@ -22,7 +22,10 @@ public class TeamDcMotor {
     private Integer minPositionSeen, maxPositionSeen;
     private boolean limitsEnabled=false;
 
-    private Long targetChangeTime_ms;
+    private Long targetChangeTime_ms; // when the last order to go to a position was issued
+
+    String alertString = null;
+    Long alertStringTime_ms=null;
 
     public TeamDcMotor(Robot robot, OpMode opMode, String name) {
         this(robot, name, opMode.hardwareMap.dcMotor.get(name));
@@ -59,30 +62,43 @@ public class TeamDcMotor {
             speed_perSec = (int)(1000 * speed_raw/elapsed_ms);
 
         if ( limitsEnabled ) {
-            if ( minimumSafetyPosition != null && motor.getPower()<0 && currentPosition<= minimumSafetyPosition)
+            if ( minimumSafetyPosition != null && motor.getPower()<0 && currentPosition <= minimumSafetyPosition) {
                 motor.setPower(0);
-            if ( maximumSafetyPosition != null && motor.getPower()>0 && currentPosition>= maximumSafetyPosition)
+                setAlert("Stopping at lower limit");
+            }
+            if ( maximumSafetyPosition != null && motor.getPower()>0 && currentPosition >= maximumSafetyPosition) {
                 motor.setPower(0);
+                setAlert("Stopping at upper limit");
+            }
         }
     }
 
+    public void setAlert(String messageFormat, Object... formatArgs) {
+        alertString = String.format(messageFormat, formatArgs);
+        alertStringTime_ms = System.currentTimeMillis();
+    }
+
     public String getTelemetryString() {
+        String alert="";
+        if ( alertString!=null && (System.currentTimeMillis()-alertStringTime_ms)<5000)
+            alert = "!!"+alertString+"!!";
+
         switch (motor.getMode()) {
             case RUN_TO_POSITION:
                 if ( isBusy() )
-                    return String.format("Busy %d-->%d (p%5.2f) (%d/s)",
+                    return String.format("%sBusy %d-->%d (p%5.2f) (%d/s)",alert,
                             currentPosition, motor.getTargetPosition(), motor.getPower(), speed_perSec);
                 else
-                    return String.format("Hold %5.2f hold@%d (%d/s)",
+                    return String.format("%sHold %5.2f hold@%d (%d/s)", alert,
                             motor.getPower(), currentPosition, speed_perSec);
             case RUN_USING_ENCODER:
-                return String.format("spd %+5.2f @%d *%d/s*", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+                return String.format("%sspd %+5.2f @%d *%d/s*", alert, motor.getPower(), motor.getCurrentPosition(), speed_perSec);
             case RUN_WITHOUT_ENCODER:
-                return String.format("pow %+5.2f @%d (%d/s)", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+                return String.format("%spow %+5.2f @%d (%d/s)", alert, motor.getPower(), motor.getCurrentPosition(), speed_perSec);
             case STOP_AND_RESET_ENCODER:
-                return String.format("reset %+5.2f @%d (%d/s)", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+                return String.format("%sreset %+5.2f @%d (%d/s)", alert, motor.getPower(), motor.getCurrentPosition(), speed_perSec);
             default:
-                return String.format("unk %+5.2f @%d (%d/s)", motor.getPower(), motor.getCurrentPosition(), speed_perSec);
+                return String.format("%sunk %+5.2f @%d (%d/s)", alert, motor.getPower(), motor.getCurrentPosition(), speed_perSec);
 
         }
     }
@@ -234,6 +250,14 @@ public class TeamDcMotor {
      * @see DcMotor#setPowerFloat()
      */
     public void setPower(double power) {
+        if (minimumSafetyPosition != null && power < 0 && currentPosition <= minimumSafetyPosition) {
+            power = 0;
+            setAlert("Can't go below lower limit");
+        }
+        if (minimumSafetyPosition != null && power > 0 && currentPosition >= maximumSafetyPosition) {
+            power = 0;
+            setAlert("Can't go beyond upper limit");
+        }
         motor.setPower(power);
     }
 
