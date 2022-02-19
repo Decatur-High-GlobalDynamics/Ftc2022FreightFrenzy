@@ -16,19 +16,21 @@ import androidx.annotation.NonNull;
 
 public class Robot {
 
-    private static final int MAX_ELEVATOR_POSITION = 3600;
-    private static final int MIN_ELEVATOR_POSITION = 0;
+    private static final int MAX_ELEVATOR_POSITION = 3500;
+    private static final int MIN_ELEVATOR_POSITION = 20;
+    private static final double SLOW_POWER_FACTOR = 0.5;
 
-    public final double TICKS_PER_INCH = 3750/42.5;
+    public final double TICKS_PER_INCH = 5000/103.0;
     public double defaultElevatorPower = 0.1;
     public final double MAX_CUP_TURN_SERVO_POS = 1.0; // Default position
     public final double MIN_CUP_TURN_SERVO_POS = 0.45;
     public final double MAX_CUP_DUMP_SERVO_POS = .80; // Default position
-    public final double MIN_CUP_DUMP_SERVO_POS = 0.15;
+    public final double MIN_CUP_DUMP_SERVO_POS = 0.12;
 
     public final TeamServo cupTurnServo;
     public final TeamServo cupDumpServo;
 
+    public boolean slowDriving = false;
 
     TeamOpMode opMode;
     TeamDcMotor leftDrive, rightDrive;
@@ -62,6 +64,7 @@ public class Robot {
         elevator = new TeamDcMotor(this, opMode, "elevator");
         elevator.setMaximumSafetyPosition(MAX_ELEVATOR_POSITION);
         elevator.setMinimumSafetyPosition(MIN_ELEVATOR_POSITION);
+        elevator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         cupTurnServo = new TeamServo(this, opMode, "cup_turn_servo");
         cupTurnServo.setMaximumSafetyPosition(MAX_CUP_TURN_SERVO_POS);
@@ -132,9 +135,10 @@ public class Robot {
                         new Func<String>() {
                             @Override
                             public String value() {
-                                return String.format("Left=%s|Right=%s",
+                                return String.format("Left=%s|Right=%s|Slow=%s",
                                         leftDrive.getTelemetryString(),
-                                        rightDrive.getTelemetryString());
+                                        rightDrive.getTelemetryString(),
+                                        slowDriving ? "Slow" : "Normal");
                             }
                         });
 
@@ -200,6 +204,10 @@ public class Robot {
      * @param power
      */
     public void setLeftPower(double power) {
+        if (slowDriving)
+        {
+            power = power * SLOW_POWER_FACTOR;
+        }
         leftDrive.setPower(power);
     }
 
@@ -208,6 +216,10 @@ public class Robot {
      * @param power
      */
     public void setRightPower(double power) {
+        if (slowDriving)
+        {
+            power = power * SLOW_POWER_FACTOR;
+        }
         rightDrive.setPower(power);
     }
 
@@ -299,8 +311,10 @@ public class Robot {
         lastImuReading3 = _getAngle3FromImu();
 
         // Elevator zero-setting
+        /*
         if (elevator.getPower() < 0 && cup_touch.getState())
             elevator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        */
 
         // Check for wrapping around (suddenly we will have turned a lot)
         if ( degreesTurned > 180 )
@@ -313,6 +327,8 @@ public class Robot {
         leftDrive.loop();
         rightDrive.loop();
         turn_table.loop();
+        elevator.loop();
+        spintake.loop();
 
         opMode.telemetry.update();
     }
@@ -334,10 +350,6 @@ public class Robot {
     public void setElevatorPower(double percent) {
         final double MAX_POWER = 1.0;
 
-        if ( percent > 0 && elevator.getCurrentPosition() > MAX_ELEVATOR_POSITION )
-            return;
-        if ( percent < 0 && elevator.getCurrentPosition() < MIN_ELEVATOR_POSITION )
-            return;
         elevator.setPower(MAX_POWER * percent);
         elevator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }

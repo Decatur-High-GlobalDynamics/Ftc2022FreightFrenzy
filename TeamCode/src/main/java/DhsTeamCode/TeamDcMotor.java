@@ -20,7 +20,7 @@ public class TeamDcMotor {
     int speed_raw, speed_perSec;
     private Integer minimumSafetyPosition, maximumSafetyPosition;
     private Integer minPositionSeen, maxPositionSeen;
-    private boolean limitsEnabled=false;
+    public boolean limitsEnabled=false;
 
     private Long targetChangeTime_ms; // when the last order to go to a position was issued
 
@@ -250,13 +250,16 @@ public class TeamDcMotor {
      * @see DcMotor#setPowerFloat()
      */
     public void setPower(double power) {
-        if (minimumSafetyPosition != null && power < 0 && currentPosition <= minimumSafetyPosition) {
-            power = 0;
-            setAlert("Can't go below lower limit");
-        }
-        if (minimumSafetyPosition != null && power > 0 && currentPosition >= maximumSafetyPosition) {
-            power = 0;
-            setAlert("Can't go beyond upper limit");
+        if (limitsEnabled)
+        {
+            if (minimumSafetyPosition != null && power < 0 && currentPosition <= minimumSafetyPosition) {
+                power = 0;
+                setAlert("Can't go below lower limit: %d <= %d", currentPosition, minimumSafetyPosition);
+            }
+            if (minimumSafetyPosition != null && power > 0 && currentPosition >= maximumSafetyPosition) {
+                power = 0;
+                setAlert("Can't go beyond upper limit: %d >= %d", currentPosition, maximumSafetyPosition);
+            }
         }
         motor.setPower(power);
     }
